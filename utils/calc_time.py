@@ -1,4 +1,4 @@
-""""""
+"""Utils for project."""
 from datetime import datetime
 
 
