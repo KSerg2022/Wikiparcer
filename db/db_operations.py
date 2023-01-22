@@ -116,7 +116,7 @@ def get_mean_value_of_second_level_descendants(title_article: str) -> list[str]:
     return mean_value_of_second_level_descendants
 
 
-def get_query(query: dict[str, str]) -> list[list]:
+def get_query(query: str) -> list[list]:
     """
     Get data according to query.
     :param query: key for query in dict from 'queries' from 'data.py'.
