@@ -2,7 +2,7 @@
 import re
 from time import sleep
 
-from utils.time import calc_time
+from utils.calc_time import calc_time
 from db.db_postgres import (main as init_db,
                             insert_data_in_table_link,
                             insert_data_in_table_link_to_link, )
