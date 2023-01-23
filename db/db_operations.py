@@ -65,6 +65,7 @@ def get_urls_from_start_url(start_url: list[str] | str = None, article: bool = F
     """
     Get a list of link's id, first-level descendants.
     :param start_url: initial link,
+    :param article: If True - function return list of articles? if False - list of links,
     :return: list of ids for links, which are first-level descendants.
     """
     id_for_start_url = 0
