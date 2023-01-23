@@ -196,7 +196,7 @@ def add_data_to_db(start_article: str, start_url: str, uniq_data_teg_a: list[str
     insert_data_in_table_link_to_link(data_for_table_link_to_link)
 
 
-def get_result_from_db(start_article, finish_article):
+def get_result_from_db(start_article: str, finish_article: str) -> bool | list[str]:
     """
     Get result from start_article to finish_article in database, and is there a transition path.
     :param start_article: title of article from which start find,
@@ -207,21 +207,30 @@ def get_result_from_db(start_article, finish_article):
     start_title_article = get_check_title_article(start_article)
     if start_title_article:
         finish_title_article = get_check_title_article(finish_article)
-
         if not finish_title_article:
             return False
-        total_result.append(start_title_article[0])
-        total_result.append(finish_title_article[0])
 
+        total_result.append(finish_title_article[0])
         position_in_total_result = -1
         while True:
             parent_title_article = get_check_parent_title_article(total_result[position_in_total_result])
             if not parent_title_article:
                 return False
-            total_result.insert(position_in_total_result, parent_title_article[0])
-            position_in_total_result -= 1
-            if total_result[0] != parent_title_article[0]:
+            if len(parent_title_article) > 1:
+                if start_title_article[0] in parent_title_article:
+                    total_result.insert(position_in_total_result, start_title_article[0])
+
+                    return total_result
+                else:
+                    total_result.insert(position_in_total_result, parent_title_article[0])
+            else:
+                total_result.insert(position_in_total_result, parent_title_article[0])
+
+            if total_result[0] == start_title_article[0]:
                 return total_result
+
+            position_in_total_result -= 1
+
     return False
 
 
