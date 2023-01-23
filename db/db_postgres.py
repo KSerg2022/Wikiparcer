@@ -202,7 +202,7 @@ def insert_data_in_table_link_to_link(id_links: list[tuple] | tuple):
     if connection:
         cursor = connection.cursor()
         for link in id_links:
-            if not check_link_to_link_in_db(link, cursor) or link[0] == link[1]:
+            if not check_link_to_link_in_db(link, cursor):
                 try:
                     insert_query = f'INSERT INTO link_to_link(link_left, link_right) VALUES {link}'
                     cursor.execute(insert_query)
@@ -215,14 +215,16 @@ def insert_data_in_table_link_to_link(id_links: list[tuple] | tuple):
     return True
 
 
-def check_link_to_link_in_db(link_to_link, cursor):
+def check_link_to_link_in_db(link_to_link: tuple[int], cursor) -> tuple[int] | bool:
     """
     Check exist a pair of links in database.
     param link_to_link: a pair of links which must check in database,
     :return: if a pair of links in database - True, if not - None.
     """
+    if link_to_link[0] == link_to_link[1]:
+        return True
     get_query = f"SELECT link_left, link_right FROM link_to_link " \
-                f"WHERE link_left = '{link_to_link[0]}' AND link_right= '{link_to_link[1]}'"
+                f"WHERE link_left = {link_to_link[0]} AND link_right= {link_to_link[1]}"
     cursor.execute(get_query)
     link = cursor.fetchone()
     return link
