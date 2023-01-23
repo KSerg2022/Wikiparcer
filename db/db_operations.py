@@ -223,9 +223,13 @@ def get_check_parent_title_article(title: str) -> list[str] | bool:
         except (Exception, Error) as error:
             print(f'When searching for data in PostgresSQ {error}')
         else:
-            title = cursor.fetchone()
+            title = cursor.fetchall()
             try:
-                title_article.append(title[0])
+                if len(title) == 1:
+                    title_article.append(title[0][0])
+                else:
+                    for value in title:
+                        title_article.append(value[0])
             except Exception:
                 return False
 
