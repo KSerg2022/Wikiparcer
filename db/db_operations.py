@@ -67,14 +67,19 @@ def get_urls_from_start_url(start_url: list[str] | str) -> list[str]:
     :param start_url: initial link,
     :return: list of ids for links, which are first-level descendants.
     """
-    id_for_start_url = get_id_for_link(start_url)[0]
-
+    id_for_start_url = ''
+    try:
+        id_for_start_url = get_id_for_link(start_url)[0]
+    except IndexError:
+        pass
     urls = []
     connection = connect_to_db()
     if connection:
         cursor = connection.cursor()
         try:
-            query = f"SELECT link FROM links " \
+            # query = f"SELECT link FROM links " \
+            #             f"WHERE links.id IN (SELECT link_right FROM link_to_link WHERE link_left = {id_for_start_url})"
+            query = f"SELECT title_article FROM links " \
                         f"WHERE links.id IN (SELECT link_right FROM link_to_link WHERE link_left = {id_for_start_url})"
             cursor.execute(query)
         except (Exception, Error) as error:
