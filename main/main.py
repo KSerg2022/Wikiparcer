@@ -146,7 +146,7 @@ def print_results_for_task(title_articles: list[str]):
                   mean_value_of_second_level_descendants)
 
 
-def find_result(start_article, finish_article, requests_per_minute, links_per_page):
+def find_result(start_article, finish_article, requests_per_minute):
     """
     Are looking for the titles of articles by moving on which you can get from the start article to the finish.
     :param start_article: title of article from which start find,
