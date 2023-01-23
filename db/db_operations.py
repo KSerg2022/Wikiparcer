@@ -67,7 +67,7 @@ def get_urls_from_start_url(start_url: list[str] | str) -> list[str]:
     :param start_url: initial link,
     :return: list of ids for links, which are first-level descendants.
     """
-    id_for_start_url = ''
+    id_for_start_url = 0
     try:
         id_for_start_url = get_id_for_link(start_url)[0]
     except IndexError:
@@ -80,7 +80,7 @@ def get_urls_from_start_url(start_url: list[str] | str) -> list[str]:
             # query = f"SELECT link FROM links " \
             #             f"WHERE links.id IN (SELECT link_right FROM link_to_link WHERE link_left = {id_for_start_url})"
             query = f"SELECT title_article FROM links " \
-                        f"WHERE links.id IN (SELECT link_right FROM link_to_link WHERE link_left = {id_for_start_url})"
+                    f"WHERE links.id IN (SELECT link_right FROM link_to_link WHERE link_left = {id_for_start_url})"
             cursor.execute(query)
         except (Exception, Error) as error:
             print(f'When searching for data in  PostgresSQ {error}')
@@ -106,9 +106,9 @@ def get_mean_value_of_second_level_descendants(title_article: str) -> list[str]:
         cursor = connection.cursor()
         try:
             query = f"SELECT link_left, link_right, count(link_left)" \
-                        f" FROM link_to_link WHERE link_left IN " \
-                        f"(SELECT link_right FROM link_to_link WHERE link_left = {id_url[0]})" \
-                        f" GROUP BY link_left, link_right"
+                    f" FROM link_to_link WHERE link_left IN " \
+                    f"(SELECT link_right FROM link_to_link WHERE link_left = {id_url[0]})" \
+                    f" GROUP BY link_left, link_right"
             cursor.execute(query)
         except (Exception, Error) as error:
             print(f'When searching for data in PostgresSQ {error}')
@@ -209,9 +209,9 @@ def get_check_parent_title_article(title: str) -> list[str] | bool:
         cursor = connection.cursor()
         try:
             query = f"SELECT title_article FROM link_to_link, links " \
-                        f"WHERE link_right = (SELECT id link FROM links " \
-                        f"WHERE title_article = '{title}') " \
-                        f"AND id = link_left"
+                    f"WHERE link_right = (SELECT id link FROM links " \
+                    f"WHERE title_article = '{title}') " \
+                    f"AND id = link_left"
             cursor.execute(query)
         except (Exception, Error) as error:
             print(f'When searching for data in PostgresSQ {error}')
