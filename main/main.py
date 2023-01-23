@@ -257,6 +257,7 @@ def main(start_article, finish_article, requests_per_minute=None, links_per_page
     else:
         total_result = find_result(start_article, finish_article, requests_per_minute, links_per_page)
         if total_result:
+            total_result = get_result_from_db(start_article, finish_article)
             print_results_for_task(total_result)
             return total_result
         else:
@@ -265,6 +266,7 @@ def main(start_article, finish_article, requests_per_minute=None, links_per_page
             for title_article in title_articles[10:]:
                 total_result = find_result(title_article, finish_article, requests_per_minute, links_per_page)
                 if total_result:
+                    total_result = get_result_from_db(start_article, finish_article)
                     print_results_for_task(total_result)
                     return total_result
                 return print('Can not find by 3 step')
