@@ -215,14 +215,13 @@ def add_data_to_db(start_article: str, start_url: str, uniq_data_teg_a: list[str
     insert_data_in_table_link_to_link(data_for_table_link_to_link)
 
 
-def check_article_in_db(start_article, finish_article):
+def get_result_from_db(start_article, finish_article):
     """
-    Check if there is start_article, finish_article in database, and is there a transition path.
+    Get result from start_article to finish_article in database, and is there a transition path.
     :param start_article: title of article from which start find,
     :param finish_article: title of article on which is stopping finding,
     :return: if found - list of title articles from start to end, if not found - False.
     """
-
     total_result = []
     start_title_article = get_check_title_article(start_article)
     if start_title_article:
@@ -250,7 +249,7 @@ def main(start_article, finish_article, requests_per_minute=None, links_per_page
     """Main controller."""
     init_db()
 
-    total_result = check_article_in_db(start_article, finish_article)
+    total_result = get_result_from_db(start_article, finish_article)
     if total_result:
         print_results_for_task(total_result)
         return total_result
