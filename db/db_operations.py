@@ -61,7 +61,7 @@ def get_id_for_title_article(title: str) -> list[str]:
     return id_article
 
 
-def get_urls_from_start_url(start_url: list[str] | str) -> list[str]:
+def get_urls_from_start_url(start_url: list[str] | str = None, article: bool = False) -> list[str]:
     """
     Get a list of link's id, first-level descendants.
     :param start_url: initial link,
@@ -77,10 +77,16 @@ def get_urls_from_start_url(start_url: list[str] | str) -> list[str]:
     if connection:
         cursor = connection.cursor()
         try:
-            # query = f"SELECT link FROM links " \
-            #             f"WHERE links.id IN (SELECT link_right FROM link_to_link WHERE link_left = {id_for_start_url})"
-            query = f"SELECT title_article FROM links " \
-                    f"WHERE links.id IN (SELECT link_right FROM link_to_link WHERE link_left = {id_for_start_url})"
+            if start_url:
+                query = f"SELECT link FROM links " \
+                        f"WHERE links.id IN (SELECT link_right FROM link_to_link" \
+                        f" WHERE link_left = {id_for_start_url})"
+
+            if article:
+                query = f"SELECT title_article FROM links " \
+                        f"WHERE links.id IN (SELECT link_right FROM link_to_link" \
+                        f" WHERE link_left = {id_for_start_url})"
+
             cursor.execute(query)
         except (Exception, Error) as error:
             print(f'When searching for data in  PostgresSQ {error}')
