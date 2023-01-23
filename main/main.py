@@ -261,9 +261,9 @@ def main(start_article, finish_article, requests_per_minute=None, links_per_page
             return total_result
         else:
             start_url = f'{wiki_link}{start_article}'
-            links = get_urls_from_start_url(start_url)
-            for link in links:
-                total_result = find_result(link, finish_article, requests_per_minute, links_per_page)
+            title_articles = get_urls_from_start_url(start_url)
+            for title_article in title_articles[10:]:
+                total_result = find_result(title_article, finish_article, requests_per_minute, links_per_page)
                 if total_result:
                     print_results_for_task(total_result)
                     return total_result
