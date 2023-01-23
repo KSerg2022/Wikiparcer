@@ -159,13 +159,13 @@ def find_result(start_article, finish_article, requests_per_minute, links_per_pa
 
     link, uniq_data_teg_a = find_article_name_on_page(start_url, finish_article)
     if link:
-        add_data_to_db(start_article, start_url, uniq_data_teg_a, links_per_page)
+        add_data_to_db(start_article, start_url, uniq_data_teg_a)
 
         link = find_links(link)
         return link
 
     if uniq_data_teg_a:
-        add_data_to_db(start_article, start_url, uniq_data_teg_a, links_per_page)
+        add_data_to_db(start_article, start_url, uniq_data_teg_a)
 
         links = get_urls_from_start_url(start_url)
         link = get_page_by_link(links, limit_per_minute=requests_per_minute, finish_article=finish_article)
@@ -174,7 +174,7 @@ def find_result(start_article, finish_article, requests_per_minute, links_per_pa
     return False
 
 
-def add_data_to_db(start_article: str, start_url: str, uniq_data_teg_a: list[str], links_per_page: int):
+def add_data_to_db(start_article: str, start_url: str, uniq_data_teg_a: list[str]):
     """
     Adding data to database.
     :param start_article: title of article from which start find,
@@ -186,12 +186,12 @@ def add_data_to_db(start_article: str, start_url: str, uniq_data_teg_a: list[str
     data_links = find_links(uniq_data_teg_a)
     insert_data_in_table_link(data_links)
 
-    links_for_requests = data_links[:links_per_page]
     try:
         id_start_link = get_id_for_title_article(start_article)
     except TypeError:
         id_start_link = get_id_for_link(start_url)
-    id_links = get_id_for_link(links_for_requests)
+
+    id_links = get_id_for_link(data_links)
     data_for_table_link_to_link = list(zip(id_start_link * len(id_links), id_links))
     insert_data_in_table_link_to_link(data_for_table_link_to_link)
 
@@ -236,7 +236,7 @@ def main(start_article, finish_article, requests_per_minute=None, links_per_page
         return total_result
 
     else:
-        total_result = find_result(start_article, finish_article, requests_per_minute, links_per_page)
+        total_result = find_result(start_article, finish_article, requests_per_minute)
         if total_result:
             total_result = get_result_from_db(start_article, finish_article)
             print_results_for_task(total_result)
@@ -244,8 +244,8 @@ def main(start_article, finish_article, requests_per_minute=None, links_per_page
         else:
             start_url = f'{wiki_link}{start_article}'
             title_articles = get_urls_from_start_url(start_url, article=True)
-            for title_article in title_articles:
-                total_result = find_result(title_article, finish_article, requests_per_minute, links_per_page)
+            for title_article in title_articles[:links_per_page]:
+                total_result = find_result(title_article, finish_article, requests_per_minute)
                 if total_result:
                     total_result = get_result_from_db(start_article, finish_article)
                     print_results_for_task(total_result)
