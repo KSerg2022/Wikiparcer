@@ -21,9 +21,8 @@ from settings import wiki_link
 
 
 def get_page_by_link(links: list[str],
-                     total_result: list,
                      limit_per_minute: int,
-                     finish_article: str) -> bool:
+                     finish_article: str) -> tuple | bool:
     """
     Find link to article with title - in variable 'finish_article'
     :param links: list of links for queries,
@@ -41,8 +40,6 @@ def get_page_by_link(links: list[str],
         link_name, uniq_data_teg_a = find_article_name_on_page(text_page, finish_article=finish_article)
         if link_name:
             link_to_article = find_links(link_name)
-            add_article_to_result(get_title_article(link), total_result)
-            add_article_to_result(link_to_article[1], total_result)
 
             insert_data_in_table_link((link, check_found_link(link)))
             insert_data_in_table_link(link_to_article)
@@ -50,7 +47,7 @@ def get_page_by_link(links: list[str],
             id_links = get_id_for_link(link_to_article)
             data_for_table_link_to_link = list(zip(id_start_link * len(id_links), id_links))
             insert_data_in_table_link_to_link(data_for_table_link_to_link)
-            return True
+            return link_to_article
 
         sleep(timeout)
     return False
@@ -135,18 +132,6 @@ def find_article_name_on_page(start_url: str, finish_article: str) -> tuple[str,
         return False, clean_uniq_data_teg_a
 
 
-def add_article_to_result(title_articles: str | list[str] | tuple, total_result: list[str]):
-    """
-    Add title article to variable 'total_result' to store result.
-    :param title_articles: title article to store in result,
-    :param total_result: variable to store the result,
-    """
-    if not isinstance(title_articles, list):
-        title_articles = [title_articles]
-    for title_article in title_articles:
-        total_result.append(title_article)
-
-
 def print_results_for_task(title_articles: list[str]):
     """
     Output results according to task.
@@ -161,7 +146,7 @@ def print_results_for_task(title_articles: list[str]):
                   mean_value_of_second_level_descendants)
 
 
-def find_result(start_article, finish_article, requests_per_minute, links_per_page):
+def find_result(start_article, finish_article, requests_per_minute):
     """
     Are looking for the titles of articles by moving on which you can get from the start article to the finish.
     :param start_article: title of article from which start find,
@@ -170,30 +155,26 @@ def find_result(start_article, finish_article, requests_per_minute, links_per_pa
     :param links_per_page: maximum number of links that are taken from the page,
     :return: If found - True, if not found - False.
     """
-    total_result = []
     start_url = f'{wiki_link}{start_article}'
-    add_article_to_result(start_article, total_result)
 
     link, uniq_data_teg_a = find_article_name_on_page(start_url, finish_article)
     if link:
-        add_data_to_db(start_article, start_url, uniq_data_teg_a, links_per_page)
+        add_data_to_db(start_article, start_url, uniq_data_teg_a)
 
         link = find_links(link)
-        add_article_to_result(get_title_article(link[0]), total_result)
-        return total_result
+        return link
 
     if uniq_data_teg_a:
-        add_data_to_db(start_article, start_url, uniq_data_teg_a, links_per_page)
+        add_data_to_db(start_article, start_url, uniq_data_teg_a)
 
         links = get_urls_from_start_url(start_url)
-        status = get_page_by_link(links, total_result,
-                                  limit_per_minute=requests_per_minute, finish_article=finish_article)
-        if status:
-            return total_result
+        link = get_page_by_link(links, limit_per_minute=requests_per_minute, finish_article=finish_article)
+        if link:
+            return link
     return False
 
 
-def add_data_to_db(start_article: str, start_url: str, uniq_data_teg_a: list[str], links_per_page: int):
+def add_data_to_db(start_article: str, start_url: str, uniq_data_teg_a: list[str]):
     """
     Adding data to database.
     :param start_article: title of article from which start find,
@@ -205,43 +186,51 @@ def add_data_to_db(start_article: str, start_url: str, uniq_data_teg_a: list[str
     data_links = find_links(uniq_data_teg_a)
     insert_data_in_table_link(data_links)
 
-    links_for_requests = data_links[:links_per_page]
     try:
         id_start_link = get_id_for_title_article(start_article)
     except TypeError:
         id_start_link = get_id_for_link(start_url)
-    id_links = get_id_for_link(links_for_requests)
+
+    id_links = get_id_for_link(data_links)
     data_for_table_link_to_link = list(zip(id_start_link * len(id_links), id_links))
     insert_data_in_table_link_to_link(data_for_table_link_to_link)
 
 
-def check_article_in_db(start_article, finish_article):
+def get_result_from_db(start_article: str, finish_article: str) -> bool | list[str]:
     """
-    Check if there is start_article, finish_article in database, and is there a transition path.
+    Get result from start_article to finish_article in database, and is there a transition path.
     :param start_article: title of article from which start find,
     :param finish_article: title of article on which is stopping finding,
     :return: if found - list of title articles from start to end, if not found - False.
     """
-
     total_result = []
     start_title_article = get_check_title_article(start_article)
     if start_title_article:
         finish_title_article = get_check_title_article(finish_article)
-
         if not finish_title_article:
             return False
-        total_result.append(start_title_article[0])
-        total_result.append(finish_title_article[0])
 
+        total_result.append(finish_title_article[0])
         position_in_total_result = -1
         while True:
             parent_title_article = get_check_parent_title_article(total_result[position_in_total_result])
             if not parent_title_article:
                 return False
-            total_result.insert(position_in_total_result, parent_title_article[0])
-            position_in_total_result -= 1
-            if total_result[0] != parent_title_article[0]:
+            if len(parent_title_article) > 1:
+                if start_title_article[0] in parent_title_article:
+                    total_result.insert(position_in_total_result, start_title_article[0])
+
+                    return total_result
+                else:
+                    total_result.insert(position_in_total_result, parent_title_article[0])
+            else:
+                total_result.insert(position_in_total_result, parent_title_article[0])
+
+            if total_result[0] == start_title_article[0]:
                 return total_result
+
+            position_in_total_result -= 1
+
     return False
 
 
@@ -250,22 +239,26 @@ def main(start_article, finish_article, requests_per_minute=None, links_per_page
     """Main controller."""
     init_db()
 
-    total_result = check_article_in_db(start_article, finish_article)
+    total_result = get_result_from_db(start_article, finish_article)
     if total_result:
         print_results_for_task(total_result)
         return total_result
 
     else:
-        total_result = find_result(start_article, finish_article, requests_per_minute, links_per_page)
+        total_result = find_result(start_article, finish_article, requests_per_minute)
         if total_result:
+            total_result = get_result_from_db(start_article, finish_article)
             print_results_for_task(total_result)
             return total_result
         else:
             start_url = f'{wiki_link}{start_article}'
-            links = get_urls_from_start_url(start_url)
-            for link in links:
-                total_result = find_result(link, finish_article, requests_per_minute, links_per_page)
+            title_articles = get_urls_from_start_url(start_url, article=True)
+            for title_article in title_articles[:links_per_page]:
+                total_result = find_result(title_article, finish_article, requests_per_minute)
                 if total_result:
+                    total_result = get_result_from_db(start_article, finish_article)
                     print_results_for_task(total_result)
                     return total_result
-                return print('Can not find by 3 step')
+
+            print('Can not find by 3 step')
+            return []
