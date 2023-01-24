@@ -55,22 +55,6 @@ def parse_title(text_page):
     return title.string.split('—')[0].rstrip()
 
 
-def normalize_link(url: str) -> str:
-    """
-    Get a string in the form: href="/wiki/%D0%94%D0%BE%D0%B2%D1%96%D1%80%D0%B0"
-    :return: the string as: /wiki/%D0%94%D0%BE%D0%B2%D1%96%D1%80%D0%B0
-    """
-    return url[6:-1]
-
-
-def normalize_title(title: str) -> str:
-    """
-    Get a string in the form: title="Любов">
-    :return: the string as: "Любов"
-    """
-    return title[7:-2]
-
-
 def clean_data_teg_a(data: list[str]) -> list[str]:
     """Delete lines that do not contain a word - 'title'."""
     pattern = re.compile('title')

@@ -14,8 +14,11 @@ from db.db_operations import (get_id_for_link,
                               get_title_article,
                               get_check_title_article,
                               get_check_parent_title_article)
-from main.parcer import (get_page, parse_page, normalize_link_to_http, parse_title,
-                         normalize_link, normalize_title, clean_data_teg_a)
+from main.parcer import (get_page,
+                         parse_page,
+                         normalize_link_to_http,
+                         parse_title,
+                         clean_data_teg_a)
 from main.display_result import maim as print_results
 from settings import wiki_link
 
@@ -63,11 +66,11 @@ def find_links(links: list[str] | str) -> list[tuple] | tuple:
 
     if len(links) == 1:
         url = pattern_link.findall(str(links))
-        url = normalize_link(url.pop())
+        url = url.pop()[6:-1]
         url = normalize_link_to_http(url)
 
         title = pattern_title.findall(str(links))
-        title = normalize_title(str(title.pop()))
+        title = str(title.pop())[7:-2]
         title = re.sub(r"\'", "", title)
         return tuple((url.pop(), title))
     else:
@@ -77,9 +80,10 @@ def find_links(links: list[str] | str) -> list[tuple] | tuple:
             title = pattern_title.findall(str(link))
             if not url or not title:
                 continue
-            url = normalize_link(url.pop())
+            url = url.pop()[6:-1]
             url = normalize_link_to_http(url)
-            title = normalize_title(str(title.pop()))
+
+            title = str(title.pop())[7:-2]
             title = re.sub(r"\'", "", title)
             results.append((url.pop(), title))
     return results
