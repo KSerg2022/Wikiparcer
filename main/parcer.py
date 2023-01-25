@@ -45,14 +45,20 @@ def normalize_link_to_http(links: list[str] | str) -> list[str] | str:
     return links_normalize
 
 
-def parse_title(text_page):
+def parse_title(text_page) -> str:
     """
     Parse the received data from the page on the Internet,
     to get 'title'.
     """
     soup = BeautifulSoup(text_page.content, 'html.parser')
-    title = soup.title
-    return title.string.split('—')[0].rstrip()
+    try:
+        title = soup.h1.get_text()
+    except AttributeError:
+        try:
+            title = soup.title.string.split('—')[0].rstrip()
+        except AttributeError:
+            raise 'Title not found'
+    return title
 
 
 def clean_data_teg_a(data: list[str]) -> list[str]:
