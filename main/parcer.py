@@ -11,7 +11,7 @@ def get_page(url: str):
     global page
     try:
         page = requests.get(f'{url}')
-    except Exception:
+    except requests.exceptions.RequestException:
         pass
     return page
 
