@@ -23,7 +23,8 @@ def parse_page(text_page):
     2. Select all <а> tags from point 1.
     """
     soup_to_body_content = BeautifulSoup(text_page.content, 'html.parser')
-    a_tags = soup_to_body_content.find('div', {'id': 'bodyContent'}).find_all('a')
+    a_tags = soup_to_body_content.find('div', {'id': 'bodyContent'}).\
+        find_all('a', href=re.compile('^(/wiki/)((?!:).)*$'))
     return a_tags
 
 
