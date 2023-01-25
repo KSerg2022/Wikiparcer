@@ -234,8 +234,28 @@ def get_result_from_db(start_article: str, finish_article: str) -> bool | list[s
                 return total_result
 
             position_in_total_result -= 1
-
     return False
+
+
+def find_way_to_finish_article(start_article, finish_article, requests_per_minute, links_per_page):
+    """
+    Find way from start_article to finish_article.
+    :param start_article: title of article from which find way
+    :param finish_article: title of article on which is stopping finding,
+    :param requests_per_minute: request per minute limit
+    :param links_per_page: maximum number of links that are taken from the page
+    :return: ! add comment.
+    """
+    start_url = f'{wiki_link}{start_article}'
+    title_articles = get_urls_from_start_url(start_url, article=True)
+    for title_article in title_articles[:links_per_page]:
+        total_result = find_result(title_article, finish_article, requests_per_minute)
+        if total_result:
+            return total_result
+        else:
+            find_way_to_finish_article(title_article, finish_article, requests_per_minute, links_per_page)
+    print('Can not find result')
+    return []
 
 
 @calc_time
@@ -255,14 +275,14 @@ def main(start_article, finish_article, requests_per_minute=None, links_per_page
             print_results_for_task(total_result)
             return total_result
         else:
-            start_url = f'{wiki_link}{start_article}'
-            title_articles = get_urls_from_start_url(start_url, article=True)
-            for title_article in title_articles[:links_per_page]:
-                total_result = find_result(title_article, finish_article, requests_per_minute)
-                if total_result:
-                    total_result = get_result_from_db(start_article, finish_article)
-                    print_results_for_task(total_result)
-                    return total_result
+            total_result = find_way_to_finish_article(start_article,
+                                                      finish_article,
+                                                      requests_per_minute,
+                                                      links_per_page)
+            if total_result:
+                total_result = get_result_from_db(start_article, finish_article)
+                print_results_for_task(total_result)
+                return total_result
 
             print('Can not find by 3 step')
             return []
