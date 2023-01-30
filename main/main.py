@@ -29,7 +29,6 @@ def get_page_by_link(links: list[str],
     """
     Find link to article with title - in variable 'finish_article'
     :param links: list of links for queries,
-    :param total_result: variable to store the result,
     :param limit_per_minute: request per minute limit,
     :param finish_article: title of article on which is stopping finding,
     :return: True if result found, False if result not found.
@@ -325,5 +324,5 @@ def main(start_article, finish_article, requests_per_minute=None, links_per_page
                 print_results_for_task(total_result)
                 return total_result
 
-            print('Can not find by 3 step')
+            print('Can not find result.')
             return []
