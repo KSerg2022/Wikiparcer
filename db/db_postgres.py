@@ -4,7 +4,7 @@ from psycopg2 import Error
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
 from db.data import tables
-
+from settings import database_name
 
 def init_db():
     """
@@ -232,5 +232,5 @@ def check_link_to_link_in_db(link_to_link: tuple[int], cursor) -> tuple[int] | b
 
 def main():
     """Controller for initialization database and create tables."""
-    create_db('wiki')
+    create_db(database_name)
     create_table(tables)

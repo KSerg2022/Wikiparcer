@@ -11,7 +11,7 @@ def get_page(url: str):
     global page
     try:
         page = requests.get(f'{url}')
-    except Exception:
+    except requests.exceptions.RequestException:
         pass
     return page
 
@@ -23,7 +23,8 @@ def parse_page(text_page):
     2. Select all <а> tags from point 1.
     """
     soup_to_body_content = BeautifulSoup(text_page.content, 'html.parser')
-    a_tags = soup_to_body_content.find('div', {'id': 'bodyContent'}).find_all('a')
+    a_tags = soup_to_body_content.find('div', {'id': 'bodyContent'}).\
+        find_all('a', href=re.compile('^(/wiki/)((?!:).)*$'))
     return a_tags
 
 
@@ -45,30 +46,20 @@ def normalize_link_to_http(links: list[str] | str) -> list[str] | str:
     return links_normalize
 
 
-def parse_title(text_page):
+def parse_title(text_page) -> str:
     """
     Parse the received data from the page on the Internet,
     to get 'title'.
     """
     soup = BeautifulSoup(text_page.content, 'html.parser')
-    title = soup.title
-    return title.string.split('—')[0].rstrip()
-
-
-def normalize_link(url: str) -> str:
-    """
-    Get a string in the form: href="/wiki/%D0%94%D0%BE%D0%B2%D1%96%D1%80%D0%B0"
-    :return: the string as: /wiki/%D0%94%D0%BE%D0%B2%D1%96%D1%80%D0%B0
-    """
-    return url[6:-1]
-
-
-def normalize_title(title: str) -> str:
-    """
-    Get a string in the form: title="Любов">
-    :return: the string as: "Любов"
-    """
-    return title[7:-2]
+    try:
+        title = soup.h1.get_text()
+    except AttributeError:
+        try:
+            title = soup.title.string.split('—')[0].rstrip()
+        except AttributeError:
+            raise 'Title not found'
+    return title
 
 
 def clean_data_teg_a(data: list[str]) -> list[str]:

@@ -14,8 +14,11 @@ from db.db_operations import (get_id_for_link,
                               get_title_article,
                               get_check_title_article,
                               get_check_parent_title_article)
-from main.parcer import (get_page, parse_page, normalize_link_to_http, parse_title,
-                         normalize_link, normalize_title, clean_data_teg_a)
+from main.parcer import (get_page,
+                         parse_page,
+                         normalize_link_to_http,
+                         parse_title,
+                         clean_data_teg_a)
 from main.display_result import maim as print_results
 from settings import wiki_link
 
@@ -26,7 +29,6 @@ def get_page_by_link(links: list[str],
     """
     Find link to article with title - in variable 'finish_article'
     :param links: list of links for queries,
-    :param total_result: variable to store the result,
     :param limit_per_minute: request per minute limit,
     :param finish_article: title of article on which is stopping finding,
     :return: True if result found, False if result not found.
@@ -63,11 +65,11 @@ def find_links(links: list[str] | str) -> list[tuple] | tuple:
 
     if len(links) == 1:
         url = pattern_link.findall(str(links))
-        url = normalize_link(url.pop())
+        url = url.pop()[6:-1]
         url = normalize_link_to_http(url)
 
         title = pattern_title.findall(str(links))
-        title = normalize_title(str(title.pop()))
+        title = str(title.pop())[7:-2]
         title = re.sub(r"\'", "", title)
         return tuple((url.pop(), title))
     else:
@@ -77,9 +79,10 @@ def find_links(links: list[str] | str) -> list[tuple] | tuple:
             title = pattern_title.findall(str(link))
             if not url or not title:
                 continue
-            url = normalize_link(url.pop())
+            url = url.pop()[6:-1]
             url = normalize_link_to_http(url)
-            title = normalize_title(str(title.pop()))
+
+            title = str(title.pop())[7:-2]
             title = re.sub(r"\'", "", title)
             results.append((url.pop(), title))
     return results
@@ -211,27 +214,88 @@ def get_result_from_db(start_article: str, finish_article: str) -> bool | list[s
             return False
 
         total_result.append(finish_title_article[0])
-        position_in_total_result = -1
-        while True:
-            parent_title_article = get_check_parent_title_article(total_result[position_in_total_result])
-            if not parent_title_article:
-                return False
-            if len(parent_title_article) > 1:
-                if start_title_article[0] in parent_title_article:
-                    total_result.insert(position_in_total_result, start_title_article[0])
 
-                    return total_result
-                else:
-                    total_result.insert(position_in_total_result, parent_title_article[0])
-            else:
-                total_result.insert(position_in_total_result, parent_title_article[0])
-
-            if total_result[0] == start_title_article[0]:
-                return total_result
-
-            position_in_total_result -= 1
+        way_from_start_to_finish_article = get_way_from_start_to_finish_article(start_title_article,
+                                                                                total_result)
+        if way_from_start_to_finish_article:
+            return way_from_start_to_finish_article
 
     return False
+
+
+def get_way_from_start_to_finish_article(start_title_article, total_result, time_data=None):
+    """"""
+    if not time_data:
+        time_data = []
+
+    while True:
+        parent_title_article = get_check_parent_title_article(total_result[-len(total_result)])
+        if not parent_title_article:
+            total_result.pop(0)
+            return total_result
+        if len(parent_title_article) > 1:
+            if start_title_article[0] in parent_title_article:
+                total_result.insert(0, start_title_article[0])
+                return total_result
+            else:
+                for article in parent_title_article:
+                    parents_articles = get_check_parent_title_article(article)
+                    if start_title_article[0] in parents_articles:
+                        total_result.insert(0, article)
+                        total_result.insert(0, start_title_article[0])
+                        return total_result
+
+            for article in parent_title_article:
+                if article in total_result or article in time_data:
+                    continue
+
+                if total_result[0] == start_title_article[0]:
+                    return total_result
+                total_result.insert(0, article)
+
+                time_data.append(article)
+
+                get_way_from_start_to_finish_article(start_title_article,
+                                                     total_result,
+                                                     time_data=time_data)
+        else:
+            total_result.insert(0, parent_title_article[0])
+
+        if total_result[0] == start_title_article[0]:
+            return total_result
+
+
+def find_way_to_finish_article(start_article, finish_article, requests_per_minute, links_per_page, time=None):
+    """
+    Find way from start_article to finish_article.
+    :param start_article: title of article from which find way
+    :param finish_article: title of article on which is stopping finding,
+    :param requests_per_minute: request per minute limit
+    :param links_per_page: maximum number of links that are taken from the page
+    :return: ! add comment.
+    """
+    if not time:
+        time = set()
+    start_url = f'{wiki_link}{start_article}'
+    title_articles = get_urls_from_start_url(start_url, article=True)
+    title_articles = title_articles[:links_per_page]
+    for title_article in title_articles:
+        if title_article in time:
+            continue
+
+        total_result = find_result(title_article, finish_article, requests_per_minute)
+        if total_result:
+            return total_result
+
+        time.add(title_article)
+
+    for title_article in title_articles:
+        total_result = find_way_to_finish_article(title_article, finish_article, requests_per_minute, links_per_page,
+                                                  time=time)
+        if total_result:
+            return total_result
+    print('Can not find result.')
+    return []
 
 
 @calc_time
@@ -251,14 +315,14 @@ def main(start_article, finish_article, requests_per_minute=None, links_per_page
             print_results_for_task(total_result)
             return total_result
         else:
-            start_url = f'{wiki_link}{start_article}'
-            title_articles = get_urls_from_start_url(start_url, article=True)
-            for title_article in title_articles[:links_per_page]:
-                total_result = find_result(title_article, finish_article, requests_per_minute)
-                if total_result:
-                    total_result = get_result_from_db(start_article, finish_article)
-                    print_results_for_task(total_result)
-                    return total_result
+            total_result = find_way_to_finish_article(start_article,
+                                                      finish_article,
+                                                      requests_per_minute,
+                                                      links_per_page)
+            if total_result:
+                total_result = get_result_from_db(start_article, finish_article)
+                print_results_for_task(total_result)
+                return total_result
 
-            print('Can not find by 3 step')
+            print('Can not find result.')
             return []
