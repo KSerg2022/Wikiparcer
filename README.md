@@ -5,6 +5,7 @@ A function has been written that accepts two article names as parameters and ret
 Example:
 ('Дружба', 'Рим') -> ['Дружба', 'Якопо Понтормо', 'Рим']
 
+
 Conditions:
 Searches for articles on Ukrainian Wikipedia.
 
@@ -46,4 +47,3 @@ results= [
 
 Note.
 "Execution time" is for first launch.
-
