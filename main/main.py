@@ -1,6 +1,6 @@
 """Main module."""
 import re
-from time import sleep
+from time import sleep, time
 
 from utils.calc_time import calc_time
 from db.db_postgres import (main as init_db,
@@ -21,6 +21,7 @@ from main.parcer import (get_page,
                          clean_data_teg_a)
 from main.display_result import maim as print_results
 from settings import wiki_link
+from utils.calc_time import calc_delay
 
 
 def get_page_by_link(links: list[str],
@@ -33,10 +34,11 @@ def get_page_by_link(links: list[str],
     :param finish_article: title of article on which is stopping finding,
     :return: True if result found, False if result not found.
     """
-    timeout = 60 / limit_per_minute
-    if len(links) < 200:
-        timeout = 0
     for link in links:
+        current_time = time()
+        delay = calc_delay(limit_per_minute, current_time)
+        sleep(delay)
+
         text_page = get_page(link)
 
         link_name, uniq_data_teg_a = find_article_name_on_page(text_page, finish_article=finish_article)
@@ -51,7 +53,6 @@ def get_page_by_link(links: list[str],
             insert_data_in_table_link_to_link(data_for_table_link_to_link)
             return link_to_article
 
-        sleep(timeout)
     return False
 
 
