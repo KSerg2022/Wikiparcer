@@ -251,7 +251,7 @@ def get_way_from_start_to_finish_article(start_title_article, total_result, time
                     total_result.pop(0)
 
 
-def find_way_to_finish_article(start_article, finish_article, requests_per_minute, links_per_page, time=None):
+def find_way_to_finish_article(start_article, finish_article, requests_per_minute, links_per_page, time_data=None):
     """
     Find way from start_article to finish_article.
     :param start_article: title of article from which find way
@@ -260,27 +260,26 @@ def find_way_to_finish_article(start_article, finish_article, requests_per_minut
     :param links_per_page: maximum number of links that are taken from the page
     :return: ! add comment.
     """
-    if not time:
-        time = set()
-    start_url = f'{wiki_link}{start_article}'
-    title_articles = get_urls_from_start_url(start_url, article=True)
-    title_articles = title_articles[:links_per_page]
-    for title_article in title_articles:
-        if title_article in time:
+    if not time_data:
+        time_data = set()
+
+    title_articles = [start_article]
+    title_articles.extend(get_urls_from_start_url(f'{wiki_link}{start_article}', article=True))
+    for title_article in title_articles[:links_per_page]:
+        if title_article in time_data:
             continue
 
         total_result = find_result(title_article, finish_article, requests_per_minute)
         if total_result:
             return total_result
 
-        time.add(title_article)
+        time_data.add(title_article)
 
     for title_article in title_articles:
         total_result = find_way_to_finish_article(title_article, finish_article, requests_per_minute, links_per_page,
-                                                  time=time)
+                                                  time_data=time_data)
         if total_result:
             return total_result
-    print('Can not find result.')
     return []
 
 
