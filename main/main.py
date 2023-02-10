@@ -288,26 +288,20 @@ def main(start_article, finish_article, requests_per_minute=None, links_per_page
     """Main controller."""
     init_db()
 
-    total_result = get_result_from_db(start_article, finish_article)
-    if total_result:
+
+    if total_result := get_result_from_db(start_article, finish_article):
         print_results_for_task(total_result)
         return total_result
 
     else:
-        total_result = find_result(start_article, finish_article, requests_per_minute)
+        total_result = find_way_to_finish_article(start_article,
+                                                  finish_article,
+                                                  requests_per_minute,
+                                                  links_per_page)
         if total_result:
             total_result = get_result_from_db(start_article, finish_article)
             print_results_for_task(total_result)
             return total_result
-        else:
-            total_result = find_way_to_finish_article(start_article,
-                                                      finish_article,
-                                                      requests_per_minute,
-                                                      links_per_page)
-            if total_result:
-                total_result = get_result_from_db(start_article, finish_article)
-                print_results_for_task(total_result)
-                return total_result
 
-            print('Can not find result.')
-            return []
+        print('Can not find result.')
+        return []
