@@ -209,18 +209,16 @@ def get_result_from_db(start_article: str, finish_article: str) -> bool | list[s
     """
     total_result = []
     start_title_article = get_check_title_article(start_article)
-    if start_title_article:
-        finish_title_article = get_check_title_article(finish_article)
-        if not finish_title_article:
-            return False
+    finish_title_article = get_check_title_article(finish_article)
+    if not start_title_article or not finish_title_article:
+        return False
 
-        total_result.append(finish_title_article[0])
+    total_result.append(finish_title_article[0])
 
-        way_from_start_to_finish_article = get_way_from_start_to_finish_article(start_title_article,
-                                                                                total_result)
-        if way_from_start_to_finish_article:
-            return way_from_start_to_finish_article
-
+    way_from_start_to_finish_article = get_way_from_start_to_finish_article(start_title_article,
+                                                                            total_result)
+    if way_from_start_to_finish_article:
+        return way_from_start_to_finish_article
     return False
 
 
@@ -230,40 +228,27 @@ def get_way_from_start_to_finish_article(start_title_article, total_result, time
         time_data = []
 
     while True:
-        parent_title_article = get_check_parent_title_article(total_result[-len(total_result)])
-        if not parent_title_article:
-            total_result.pop(0)
-            return total_result
-        if len(parent_title_article) > 1:
-            if start_title_article[0] in parent_title_article:
-                total_result.insert(0, start_title_article[0])
-                return total_result
-            else:
-                for article in parent_title_article:
-                    parents_articles = get_check_parent_title_article(article)
-                    if start_title_article[0] in parents_articles:
-                        total_result.insert(0, article)
-                        total_result.insert(0, start_title_article[0])
-                        return total_result
+        parent_title_articles = get_check_parent_title_article(total_result[-len(total_result)])
+        if not parent_title_articles:
+            return False
 
-            for article in parent_title_article:
+        if start_title_article[0] in parent_title_articles:
+            total_result.insert(0, start_title_article[0])
+            return total_result
+        else:
+            for article in parent_title_articles:
                 if article in total_result or article in time_data:
                     continue
 
-                if total_result[0] == start_title_article[0]:
-                    return total_result
-                total_result.insert(0, article)
-
                 time_data.append(article)
-
-                get_way_from_start_to_finish_article(start_title_article,
-                                                     total_result,
-                                                     time_data=time_data)
-        else:
-            total_result.insert(0, parent_title_article[0])
-
-        if total_result[0] == start_title_article[0]:
-            return total_result
+                total_result.insert(0, article)
+                way_from_start_to_finish_article = get_way_from_start_to_finish_article(start_title_article,
+                                                         total_result,
+                                                         time_data=time_data)
+                if way_from_start_to_finish_article:
+                    return total_result
+                else:
+                    total_result.pop(0)
 
 
 def find_way_to_finish_article(start_article, finish_article, requests_per_minute, links_per_page, time=None):
