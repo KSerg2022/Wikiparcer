@@ -6,6 +6,13 @@ from bs4 import BeautifulSoup
 from settings import key_words
 
 
+def get_links(start_url):
+    text_page = get_page(start_url)
+    data_teg_a = parse_page(text_page)
+    clean_uniq_data_teg_a = clean_data_teg_a(data_teg_a)
+    return clean_uniq_data_teg_a
+
+
 def get_page(url: str):
     """Request a page by url on the Internet and save the result"""
     global page
@@ -25,7 +32,7 @@ def parse_page(text_page):
     soup_to_body_content = BeautifulSoup(text_page.content, 'html.parser')
     a_tags = soup_to_body_content.find('div', {'id': 'bodyContent'}).\
         find_all('a', href=re.compile('^(/wiki/)((?!:).)*$'))
-    return a_tags
+    return list(set(a_tags))
 
 
 def normalize_link_to_http(links: list[str] | str) -> list[str] | str:

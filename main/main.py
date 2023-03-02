@@ -15,10 +15,9 @@ from db.db_operations import (get_id_for_link,
                               get_check_title_article,
                               get_check_parent_title_article)
 from main.parcer import (get_page,
-                         parse_page,
                          normalize_link_to_http,
                          parse_title,
-                         clean_data_teg_a)
+                         get_links)
 from main.display_result import maim as print_results
 from settings import wiki_link
 from utils.calc_time import calc_delay
@@ -124,10 +123,7 @@ def find_article_name_on_page(start_url: str, finish_article: str) -> tuple[str,
     :param finish_article: title of article on which is stopping finding,
     :return: If found - link (tag <a>) and False, if not found - False and list of links (tag <a>).
     """
-    text_page = get_page(start_url)
-    data_teg_a = parse_page(text_page)
-    uniq_data_teg_a = list(set(data_teg_a))
-    clean_uniq_data_teg_a = clean_data_teg_a(uniq_data_teg_a)
+    clean_uniq_data_teg_a = get_links(start_url)
 
     link = find_name_article_in_title(clean_uniq_data_teg_a, finish_article)
     if link:
