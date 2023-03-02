@@ -8,9 +8,8 @@ from settings import key_words
 
 def get_links(start_url):
     text_page = get_page(start_url)
-    data_teg_a = parse_page(text_page)
-    clean_uniq_data_teg_a = clean_data_teg_a(data_teg_a)
-    return clean_uniq_data_teg_a
+    links = parse_page(text_page)
+    return links
 
 
 def get_page(url: str):
@@ -32,10 +31,17 @@ def parse_page(text_page):
     soup_to_body_content = BeautifulSoup(text_page.content, 'html.parser')
     a_tags = soup_to_body_content.find('div', {'id': 'bodyContent'}).\
         find_all('a', href=re.compile('^(/wiki/)((?!:).)*$'))
-    return list(set(a_tags))
+
+    links = []
+    for a_tag in a_tags:
+        if 'href' in a_tag.attrs and 'title' in a_tag.attrs:
+            link = 'https://uk.wikipedia.org' + a_tag.attrs['href']
+            title = re.sub(r"\'", '"', a_tag.attrs['title'])
+            links.append((link, title))
+    return links
 
 
-def normalize_link_to_http(links: list[str] | str) -> list[str] | str:
+def normalize_link(links: list[str] | str) -> list[str] | str:
     """
     Get a list of urls and if it does not start with 'https',
     then we normalize it to -https://uk.wikipedia.org...
