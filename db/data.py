@@ -1,5 +1,5 @@
 """Module with data for database."""
-link = '''CREATE TABLE links (
+link = '''CREATE TABLE IF NOT EXISTS links (
             id INT GENERATED ALWAYS AS IDENTITY,
             title_article TEXT NOT NULL,
             link TEXT NOT NULL,
@@ -8,7 +8,7 @@ link = '''CREATE TABLE links (
             UNIQUE (title_article)
             );'''
 
-link_to_link = '''CREATE TABLE link_to_link (
+link_to_link = '''CREATE TABLE  IF NOT EXISTS link_to_link (
                     link_left int NOT NULL,
                     link_right int NOT NULL,
                     PRIMARY KEY (link_left, link_right),
