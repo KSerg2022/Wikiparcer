@@ -156,17 +156,15 @@ def find_result(start_article, finish_article, requests_per_minute):
     :return: If found - True, if not found - False.
     """
     start_url = f'{wiki_link}{start_article}'
-
     link, uniq_data_teg_a = find_article_name_on_page(start_url, finish_article)
-    if link:
-        add_data_to_db(start_article, start_url, uniq_data_teg_a)
 
+    add_data_to_db(start_article, start_url, uniq_data_teg_a)
+
+    if link:
         link = find_links(link)
         return link
 
     if uniq_data_teg_a:
-        add_data_to_db(start_article, start_url, uniq_data_teg_a)
-
         links = get_urls_from_start_url(start_url)
         link = get_page_by_link(links, limit_per_minute=requests_per_minute, finish_article=finish_article)
         if link:
