@@ -14,10 +14,7 @@ from db.db_operations import (get_id_for_link,
                               get_title_article,
                               get_check_title_article,
                               get_check_parent_title_article)
-from main.parcer import (get_page,
-                         normalize_link,
-                         parse_title,
-                         get_links)
+from main.parcer import get_links
 from main.display_result import maim as print_results
 from settings import wiki_link
 from utils.calc_time import calc_delay
