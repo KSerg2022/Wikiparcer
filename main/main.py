@@ -36,7 +36,7 @@ def get_page_by_link(links: list[str],
         sleep(delay)
 
         text_page = get_links(link)
-        link_name, uniq_data_teg_a = find_article_name_on_page(text_page, finish_article=finish_article)
+        link_name, links_and_title = find_article_name_on_page(text_page, finish_article=finish_article)
         if link_name:
 
             insert_data_in_table_link((link, check_found_link(link)))
