@@ -9,6 +9,7 @@ from settings import key_words
 def get_links(start_url):
     text_page = get_page(start_url)
     links = parse_page(text_page)
+    links = clean_data(links)
     return links
 
 
@@ -41,19 +42,7 @@ def parse_page(text_page):
     return links
 
 
-def clean_data_teg_a(data: list[str]) -> list[str]:
-    """Delete lines that do not contain a word - 'title'."""
-    pattern = re.compile('title')
-    results = []
-    for row in data:
-        result = pattern.search(str(row))
-        if result:
-            results.append(row)
-    results = clean_data_teg_a_additional(results)
-    return results
-
-
-def clean_data_teg_a_additional(data: list[str]) -> list[str]:
+def clean_data(data: list[tuple]) -> list[tuple]:
     """
     Delete lines that contain a word from -  'key_words'.
     :param data:
@@ -63,7 +52,7 @@ def clean_data_teg_a_additional(data: list[str]) -> list[str]:
     for word in key_words:
         pattern = re.compile(f'{word}')
         for row in data:
-            result = pattern.search(str(row))
+            result = pattern.search(str(row[1]))
             if result:
                 try:
                     results.remove(row)
