@@ -35,8 +35,8 @@ def get_page_by_link(links: list[str],
         delay = calc_delay(limit_per_minute, current_time)
         sleep(delay)
 
-        text_page = get_links(link)
-        link_name, links_and_title = find_article_name_on_page(text_page, finish_article=finish_article)
+        links = get_links(link)
+        link_name, links_and_title = find_article_name_on_page(links, finish_article=finish_article)
         if link_name:
 
             insert_data_in_table_link(link_name)
