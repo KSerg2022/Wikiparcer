@@ -52,39 +52,6 @@ def get_page_by_link(links: list[str],
     return False
 
 
-def find_links(links: list[str] | str) -> list[tuple] | tuple:
-    """
-    Get links and titles according to regular expression.
-    :return: tuple(link, title) or list of tuples.
-    """
-    pattern_link = re.compile('(href="[^\s#]+")')
-    pattern_title = re.compile('(title="[\w\s\\S]+">)')
-
-    if len(links) == 1:
-        url = pattern_link.findall(str(links))
-        url = url.pop()[6:-1]
-        url = normalize_link(url)
-
-        title = pattern_title.findall(str(links))
-        title = str(title.pop())[7:-2]
-        title = re.sub(r"\'", "", title)
-        return tuple((url.pop(), title))
-    else:
-        results = []
-        for link in links:
-            url = pattern_link.findall(str(link))
-            title = pattern_title.findall(str(link))
-            if not url or not title:
-                continue
-            url = url.pop()[6:-1]
-            url = normalize_link(url)
-
-            title = str(title.pop())[7:-2]
-            title = re.sub(r"\'", "", title)
-            results.append((url.pop(), title))
-    return results
-
-
 def find_finish_article(data_links: list[str], finish_article: str) -> str:
     """
     Find link in line where which contain text according to regular expression with variable 'finish_article'
@@ -98,19 +65,6 @@ def find_finish_article(data_links: list[str], finish_article: str) -> str:
         if result:
             return link[0]
     return ''
-
-
-def check_found_link(link: list[str] | str) -> str:
-    """
-    Find the title of the article by the link.
-    :param link: link to the finish article which are looking for,
-    :return: title of article.
-    """
-    if not isinstance(link, list):
-        link = [link]
-    text_page = get_page(link[0])
-    title = parse_title(text_page)
-    return title
 
 
 def find_article_name_on_page(start_url: str, finish_article: str) -> tuple[str, list[str]] | tuple[bool, list[str]]:

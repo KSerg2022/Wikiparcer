@@ -41,40 +41,6 @@ def parse_page(text_page):
     return links
 
 
-def normalize_link(links: list[str] | str) -> list[str] | str:
-    """
-    Get a list of urls and if it does not start with 'https',
-    then we normalize it to -https://uk.wikipedia.org...
-    """
-    if not isinstance(links, list):
-        links = [links]
-    links_normalize = []
-    for link in links:
-        if 'https' in link:
-            url = f'{link}'
-            links_normalize.append(url)
-        else:
-            url = f'https://uk.wikipedia.org{link}'
-            links_normalize.append(url)
-    return links_normalize
-
-
-def parse_title(text_page) -> str:
-    """
-    Parse the received data from the page on the Internet,
-    to get 'title'.
-    """
-    soup = BeautifulSoup(text_page.content, 'html.parser')
-    try:
-        title = soup.h1.get_text()
-    except AttributeError:
-        try:
-            title = soup.title.string.split('—')[0].rstrip()
-        except AttributeError:
-            raise 'Title not found'
-    return title
-
-
 def clean_data_teg_a(data: list[str]) -> list[str]:
     """Delete lines that do not contain a word - 'title'."""
     pattern = re.compile('title')
