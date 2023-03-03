@@ -177,10 +177,10 @@ def get_title_article(url: str | tuple) -> list[str]:
     return title_article
 
 
-def get_check_title_article(url: str) -> list[str] | bool:
+def get_check_title_article(title: str) -> list[str] | bool:
     """
     Checking if is article in database by url.
-    :param url: link to article in internet,
+    :param title: title's article for search,
     :return: if is - title for the article in database according url, if not is - False.
     """
     title_article = []
@@ -188,7 +188,7 @@ def get_check_title_article(url: str) -> list[str] | bool:
     if connection:
         cursor = connection.cursor()
         try:
-            query = f"SELECT title_article FROM links WHERE title_article = '{url}'"
+            query = f"SELECT title_article FROM links WHERE title_article = '{title}'"
             cursor.execute(query)
         except (Exception, Error) as error:
             print(f'When searching for data in PostgresSQ {error}')
