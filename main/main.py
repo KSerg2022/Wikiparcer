@@ -39,9 +39,7 @@ def get_page_by_link(links: list[str],
         link_name, links_and_title = find_article_name_on_page(text_page, finish_article=finish_article)
         if link_name:
 
-            insert_data_in_table_link((link, check_found_link(link)))
-
-            insert_data_in_table_link((link_name, check_found_link(link_name)))
+            insert_data_in_table_link(link_name)
 
             id_start_link = get_id_for_link(link)
             id_links = get_id_for_link(link_name)
@@ -63,7 +61,8 @@ def find_finish_article(data_links: list[str], finish_article: str) -> str:
         pattern = re.compile(f'{finish_article}')
         result = pattern.findall(str(link[1]))
         if result:
-            return link[0]
+            # return link[0]
+            return link
     return ''
 
 
