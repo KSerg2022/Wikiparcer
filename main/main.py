@@ -14,10 +14,7 @@ from db.db_operations import (get_id_for_link,
                               get_title_article,
                               get_check_title_article,
                               get_check_parent_title_article)
-from main.parcer import (get_page,
-                         normalize_link_to_http,
-                         parse_title,
-                         get_links)
+from main.parcer import get_links
 from main.display_result import maim as print_results
 from settings import wiki_link
 from utils.calc_time import calc_delay
@@ -38,57 +35,22 @@ def get_page_by_link(links: list[str],
         delay = calc_delay(limit_per_minute, current_time)
         sleep(delay)
 
-        text_page = get_page(link)
-
-        link_name, uniq_data_teg_a = find_article_name_on_page(text_page, finish_article=finish_article)
+        links = get_links(link)
+        link_name, links_and_title = find_article_name_on_page(links, finish_article=finish_article)
         if link_name:
-            link_to_article = find_links(link_name)
 
-            insert_data_in_table_link((link, check_found_link(link)))
-            insert_data_in_table_link(link_to_article)
+            insert_data_in_table_link(link_name)
+
             id_start_link = get_id_for_link(link)
-            id_links = get_id_for_link(link_to_article)
+            id_links = get_id_for_link(link_name)
             data_for_table_link_to_link = list(zip(id_start_link * len(id_links), id_links))
             insert_data_in_table_link_to_link(data_for_table_link_to_link)
-            return link_to_article
+            return link_name
 
     return False
 
 
-def find_links(links: list[str] | str) -> list[tuple] | tuple:
-    """
-    Get links and titles according to regular expression.
-    :return: tuple(link, title) or list of tuples.
-    """
-    pattern_link = re.compile('(href="[^\s#]+")')
-    pattern_title = re.compile('(title="[\w\s\\S]+">)')
-
-    if len(links) == 1:
-        url = pattern_link.findall(str(links))
-        url = url.pop()[6:-1]
-        url = normalize_link_to_http(url)
-
-        title = pattern_title.findall(str(links))
-        title = str(title.pop())[7:-2]
-        title = re.sub(r"\'", "", title)
-        return tuple((url.pop(), title))
-    else:
-        results = []
-        for link in links:
-            url = pattern_link.findall(str(link))
-            title = pattern_title.findall(str(link))
-            if not url or not title:
-                continue
-            url = url.pop()[6:-1]
-            url = normalize_link_to_http(url)
-
-            title = str(title.pop())[7:-2]
-            title = re.sub(r"\'", "", title)
-            results.append((url.pop(), title))
-    return results
-
-
-def find_name_article_in_title(data_links: list[str], finish_article: str) -> str:
+def find_finish_article(data_links: list[str], finish_article: str) -> str:
     """
     Find link in line where which contain text according to regular expression with variable 'finish_article'
     :param data_links: list of links (tag <a>),
@@ -96,24 +58,12 @@ def find_name_article_in_title(data_links: list[str], finish_article: str) -> st
     :return: link (tag <a>) which contain regular expression, or empty string.
     """
     for link in data_links:
-        pattern = re.compile(f'title="{finish_article}"')
-        result = pattern.findall(str(link))
+        pattern = re.compile(f'{finish_article}')
+        result = pattern.findall(str(link[1]))
         if result:
+            # return link[0]
             return link
     return ''
-
-
-def check_found_link(link: list[str] | str) -> str:
-    """
-    Find the title of the article by the link.
-    :param link: link to the finish article which are looking for,
-    :return: title of article.
-    """
-    if not isinstance(link, list):
-        link = [link]
-    text_page = get_page(link[0])
-    title = parse_title(text_page)
-    return title
 
 
 def find_article_name_on_page(start_url: str, finish_article: str) -> tuple[str, list[str]] | tuple[bool, list[str]]:
@@ -123,13 +73,13 @@ def find_article_name_on_page(start_url: str, finish_article: str) -> tuple[str,
     :param finish_article: title of article on which is stopping finding,
     :return: If found - link (tag <a>) and False, if not found - False and list of links (tag <a>).
     """
-    clean_uniq_data_teg_a = get_links(start_url)
+    links = get_links(start_url)
 
-    link = find_name_article_in_title(clean_uniq_data_teg_a, finish_article)
-    if link:
-        return link, clean_uniq_data_teg_a
+    link_to_finish_article = find_finish_article(links, finish_article)
+    if link_to_finish_article:
+        return link_to_finish_article, links
     else:
-        return False, clean_uniq_data_teg_a
+        return False, links
 
 
 def print_results_for_task(title_articles: list[str]):
@@ -156,15 +106,12 @@ def find_result(start_article, finish_article, requests_per_minute):
     :return: If found - True, if not found - False.
     """
     start_url = f'{wiki_link}{start_article}'
-    link, uniq_data_teg_a = find_article_name_on_page(start_url, finish_article)
-
-    add_data_to_db(start_article, start_url, uniq_data_teg_a)
-
+    link, links_and_title = find_article_name_on_page(start_url, finish_article)
+    add_data_to_db(start_article, start_url, links_and_title)
     if link:
-        link = find_links(link)
         return link
 
-    if uniq_data_teg_a:
+    else:
         links = get_urls_from_start_url(start_url)
         link = get_page_by_link(links, limit_per_minute=requests_per_minute, finish_article=finish_article)
         if link:
@@ -172,7 +119,7 @@ def find_result(start_article, finish_article, requests_per_minute):
     return False
 
 
-def add_data_to_db(start_article: str, start_url: str, uniq_data_teg_a: list[str]):
+def add_data_to_db(start_article: str, start_url: str, links: list[tuple]):
     """
     Adding data to database.
     :param start_article: title of article from which start find,
@@ -181,15 +128,14 @@ def add_data_to_db(start_article: str, start_url: str, uniq_data_teg_a: list[str
     :param links_per_page: maximum number of links that are taken from the page,
      """
     insert_data_in_table_link((start_url, start_article))
-    data_links = find_links(uniq_data_teg_a)
-    insert_data_in_table_link(data_links)
+    insert_data_in_table_link(links)
 
     try:
         id_start_link = get_id_for_title_article(start_article)
     except TypeError:
         id_start_link = get_id_for_link(start_url)
 
-    id_links = get_id_for_link(data_links)
+    id_links = get_id_for_link(links)
     data_for_table_link_to_link = list(zip(id_start_link * len(id_links), id_links))
     insert_data_in_table_link_to_link(data_for_table_link_to_link)
 
@@ -281,7 +227,6 @@ def find_way_to_finish_article(start_article, finish_article, requests_per_minut
 def main(start_article, finish_article, requests_per_minute=None, links_per_page=None):
     """Main controller."""
     init_db()
-
 
     if total_result := get_result_from_db(start_article, finish_article):
         print_results_for_task(total_result)

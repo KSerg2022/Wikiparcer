@@ -8,9 +8,9 @@ from settings import key_words
 
 def get_links(start_url):
     text_page = get_page(start_url)
-    data_teg_a = parse_page(text_page)
-    clean_uniq_data_teg_a = clean_data_teg_a(data_teg_a)
-    return clean_uniq_data_teg_a
+    links = parse_page(text_page)
+    links = clean_data(links)
+    return links
 
 
 def get_page(url: str):
@@ -32,56 +32,17 @@ def parse_page(text_page):
     soup_to_body_content = BeautifulSoup(text_page.content, 'html.parser')
     a_tags = soup_to_body_content.find('div', {'id': 'bodyContent'}).\
         find_all('a', href=re.compile('^(/wiki/)((?!:).)*$'))
-    return list(set(a_tags))
+
+    links = []
+    for a_tag in a_tags:
+        if 'href' in a_tag.attrs and 'title' in a_tag.attrs:
+            link = 'https://uk.wikipedia.org' + a_tag.attrs['href']
+            title = re.sub(r"\'", '"', a_tag.attrs['title'])
+            links.append((link, title))
+    return links
 
 
-def normalize_link_to_http(links: list[str] | str) -> list[str] | str:
-    """
-    Get a list of urls and if it does not start with 'https',
-    then we normalize it to -https://uk.wikipedia.org...
-    """
-    if not isinstance(links, list):
-        links = [links]
-    links_normalize = []
-    for link in links:
-        if 'https' in link:
-            url = f'{link}'
-            links_normalize.append(url)
-        else:
-            url = f'https://uk.wikipedia.org{link}'
-            links_normalize.append(url)
-    return links_normalize
-
-
-def parse_title(text_page) -> str:
-    """
-    Parse the received data from the page on the Internet,
-    to get 'title'.
-    """
-    soup = BeautifulSoup(text_page.content, 'html.parser')
-    try:
-        title = soup.h1.get_text()
-    except AttributeError:
-        try:
-            title = soup.title.string.split('—')[0].rstrip()
-        except AttributeError:
-            raise 'Title not found'
-    return title
-
-
-def clean_data_teg_a(data: list[str]) -> list[str]:
-    """Delete lines that do not contain a word - 'title'."""
-    pattern = re.compile('title')
-    results = []
-    for row in data:
-        result = pattern.search(str(row))
-        if result:
-            results.append(row)
-    results = clean_data_teg_a_additional(results)
-    return results
-
-
-def clean_data_teg_a_additional(data: list[str]) -> list[str]:
+def clean_data(data: list[tuple]) -> list[tuple]:
     """
     Delete lines that contain a word from -  'key_words'.
     :param data:
@@ -91,7 +52,7 @@ def clean_data_teg_a_additional(data: list[str]) -> list[str]:
     for word in key_words:
         pattern = re.compile(f'{word}')
         for row in data:
-            result = pattern.search(str(row))
+            result = pattern.search(str(row[1]))
             if result:
                 try:
                     results.remove(row)

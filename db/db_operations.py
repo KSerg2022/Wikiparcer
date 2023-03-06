@@ -25,6 +25,7 @@ def get_id_for_link(links: list[tuple] | tuple | str) -> list:
                 cursor.execute(query)
             except (Exception, Error) as error:
                 print(f'When searching for data {link} in PostgresSQ {error}')
+                connection.rollback()
             else:
                 id_link = cursor.fetchone()
                 if not id_link:
@@ -52,6 +53,7 @@ def get_id_for_title_article(title: str) -> list[str]:
             cursor.execute(query)
         except (Exception, Error) as error:
             print(f'When searching for data {title} in PostgresSQ {error}')
+            connection.rollback()
         else:
             id_result = cursor.fetchone()
             id_article.append(id_result[0])
@@ -91,6 +93,7 @@ def get_urls_from_start_url(start_url: list[str] | str = None, article: bool = F
             cursor.execute(query)
         except (Exception, Error) as error:
             print(f'When searching for data in  PostgresSQ {error}')
+            connection.rollback()
         else:
             for url in cursor.fetchall():
                 urls.append(list(url)[0])
@@ -119,6 +122,7 @@ def get_mean_value_of_second_level_descendants(title_article: str) -> list[str]:
             cursor.execute(query)
         except (Exception, Error) as error:
             print(f'When searching for data in PostgresSQ {error}')
+            connection.rollback()
         else:
             for url in cursor.fetchall():
                 mean_value_of_second_level_descendants.append(list(url))
@@ -144,6 +148,7 @@ def get_query(query: str) -> list[list]:
             cursor.execute(query)
         except (Exception, Error) as error:
             print(f'When searching for data in PostgresSQ {error}')
+            connection.rollback()
         else:
             for url in cursor.fetchall():
                 articles_with_most_links.append(list(url))
@@ -153,45 +158,22 @@ def get_query(query: str) -> list[list]:
     return articles_with_most_links
 
 
-def get_title_article(url: str | tuple) -> list[str]:
+def get_title_article(title: str) -> list[str] | bool:
     """
     Get title for the article in database by url.
-    :param url:  link to article in internet,
+    :param title:
     :return: title for the article in database according url.
     """
     title_article = []
+
     connection = connect_to_db()
     if connection:
         cursor = connection.cursor()
         try:
-            query = f"SELECT title_article FROM links WHERE link = '{url}'"
-            cursor.execute(query)
+            cursor.execute(f"SELECT title_article FROM links WHERE title_article = '{title}'")
         except (Exception, Error) as error:
             print(f'When searching for data in PostgresSQ {error}')
-        else:
-            title = cursor.fetchone()
-            title_article.append(title[0])
-
-        cursor.close()
-    connection.close()
-    return title_article
-
-
-def get_check_title_article(url: str) -> list[str] | bool:
-    """
-    Checking if is article in database by url.
-    :param url: link to article in internet,
-    :return: if is - title for the article in database according url, if not is - False.
-    """
-    title_article = []
-    connection = connect_to_db()
-    if connection:
-        cursor = connection.cursor()
-        try:
-            query = f"SELECT title_article FROM links WHERE title_article = '{url}'"
-            cursor.execute(query)
-        except (Exception, Error) as error:
-            print(f'When searching for data in PostgresSQ {error}')
+            connection.rollback()
         else:
             title = cursor.fetchone()
             try:
@@ -222,6 +204,7 @@ def get_check_parent_title_article(title: str) -> list[str] | bool:
             cursor.execute(query)
         except (Exception, Error) as error:
             print(f'When searching for data in PostgresSQ {error}')
+            connection.rollback()
         else:
             title = cursor.fetchall()
             try:
