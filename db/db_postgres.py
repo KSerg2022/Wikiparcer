@@ -6,6 +6,7 @@ from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 from db.data import tables
 from settings import database_name
 
+
 def init_db():
     """
     First connection to create database.
@@ -37,7 +38,7 @@ def create_db(db_name: str) -> bool:
             try:
                 connection.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
                 cursor = connection.cursor()
-                sql_create_database = f'create database {db_name}'
+                sql_create_database = f"CREATE DATABASE {db_name}"
                 cursor.execute(sql_create_database)
                 cursor.close()
             except (Exception, Error) as error:
@@ -99,37 +100,18 @@ def create_table(tables_to_add):
     connection = connect_to_db()
     if connection:
         for table in tables_to_add:
-            if not check_table_exist(connection, table):
-                try:
-                    cursor = connection.cursor()
-                    create_table_query = table
-                    cursor.execute(create_table_query)
-                    connection.commit()
-                    cursor.close()
-                except (Exception, Error) as error:
-                    connection.close()
-                    print(f'Table {table[:25]} в PostgresSQ {error}')
+            try:
+                cursor = connection.cursor()
+                create_table_query = table
+                cursor.execute(create_table_query)
+                connection.commit()
+                cursor.close()
+            except (Exception, Error) as error:
+                connection.close()
+                print(f'Table {table[:25]} в PostgresSQ {error}')
 
         connection.close()
         return True
-
-
-def check_table_exist(connection, table):
-    """
-    Check if is there table with given name in database.
-    :param connection: connection with database
-    :param table: name of table which check in database
-    :return: if table with given name exist - True, if not - False.
-    """
-    table_name = table.split()[2]
-    cursor = connection.cursor()
-    check_query = f"SELECT EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND  tablename  = '{table_name}');"
-    cursor.execute(check_query)
-    tables_exist = list(cursor.fetchone())[0]
-    cursor.close()
-    if tables_exist:
-        return True
-    return False
 
 
 def insert_data_in_table_link(links: list[tuple] | tuple) -> bool:
