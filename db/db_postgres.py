@@ -134,6 +134,10 @@ def insert_data_in_table_link(links: list[tuple] | tuple) -> bool:
             except (Exception, Error) as error:
                 # print(f'When adding data {link} in PostgresSQ {error}')
                 connection.rollback()
+                update_query = f"UPDATE links SET link = '{list(link)[0]}' WHERE title_article = '{list(link)[1]}'" \
+                               f"AND NOT EXISTS (SELECT link FROM links WHERE link = '{list(link)[0]}')"
+                cursor.execute(update_query)
+                connection.commit()
 
         cursor.close()
     connection.close()
