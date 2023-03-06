@@ -158,44 +158,19 @@ def get_query(query: str) -> list[list]:
     return articles_with_most_links
 
 
-def get_title_article(url: str | tuple) -> list[str]:
+def get_title_article(title: str) -> list[str] | bool:
     """
     Get title for the article in database by url.
-    :param url:  link to article in internet,
+    :param title:
     :return: title for the article in database according url.
     """
     title_article = []
+
     connection = connect_to_db()
     if connection:
         cursor = connection.cursor()
         try:
-            query = f"SELECT title_article FROM links WHERE link = '{url}'"
-            cursor.execute(query)
-        except (Exception, Error) as error:
-            print(f'When searching for data in PostgresSQ {error}')
-            connection.rollback()
-        else:
-            title = cursor.fetchone()
-            title_article.append(title[0])
-
-        cursor.close()
-    connection.close()
-    return title_article
-
-
-def get_check_title_article(title: str) -> list[str] | bool:
-    """
-    Checking if is article in database by url.
-    :param title: title's article for search,
-    :return: if is - title for the article in database according url, if not is - False.
-    """
-    title_article = []
-    connection = connect_to_db()
-    if connection:
-        cursor = connection.cursor()
-        try:
-            query = f"SELECT title_article FROM links WHERE title_article = '{title}'"
-            cursor.execute(query)
+            cursor.execute(f"SELECT title_article FROM links WHERE title_article = '{title}'")
         except (Exception, Error) as error:
             print(f'When searching for data in PostgresSQ {error}')
             connection.rollback()
