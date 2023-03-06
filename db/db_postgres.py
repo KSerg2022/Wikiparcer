@@ -42,8 +42,9 @@ def create_db(db_name: str) -> bool:
                 cursor.execute(sql_create_database)
                 cursor.close()
             except (Exception, Error) as error:
-                connection.close()
                 print(f'PostgresSQL: {error}')
+                connection.rollback()
+
             connection.close()
             return True
 
@@ -107,8 +108,8 @@ def create_table(tables_to_add):
                 connection.commit()
                 cursor.close()
             except (Exception, Error) as error:
-                connection.close()
                 print(f'Table {table[:25]} в PostgresSQ {error}')
+                connection.rollback()
 
         connection.close()
         return True
@@ -126,52 +127,17 @@ def insert_data_in_table_link(links: list[tuple] | tuple) -> bool:
     if connection:
         cursor = connection.cursor()
         for link in links:
-            if not check_link_in_db(list(link)[0], cursor) and not check_title_in_db(list(link)[1], cursor):
-                try:
-                    insert_query = f"INSERT INTO links(link, title_article) VALUES {link};"
-                    cursor.execute(insert_query)
-                    connection.commit()
-                except (Exception, Error) as error:
-                    print(f'When adding data {link} in PostgresSQ {error}')
-
-            else:
-                if not check_link_in_db(list(link)[0], cursor) and check_title_in_db(list(link)[1], cursor):
-                    try:
-                        update_query = f"Update links set link = '{list(link)[0]}'" \
-                                       f" where title_article = '{list(link)[1]}'"
-                        cursor.execute(update_query)
-                        connection.commit()
-                    except (Exception, Error) as error:
-                        print(f'When adding data {list(link)[0]} in PostgresSQ {error}')
+            try:
+                insert_query = f"INSERT INTO links(link, title_article) VALUES {link};"
+                cursor.execute(insert_query)
+                connection.commit()
+            except (Exception, Error) as error:
+                # print(f'When adding data {link} in PostgresSQ {error}')
+                connection.rollback()
 
         cursor.close()
     connection.close()
     return True
-
-
-def check_link_in_db(link: str, cursor) -> str:
-    """
-    Check exist link in database.
-    :param link: link which must check in database,
-    :param cursor:
-    :return: if link in database - True, if not - None.
-    """
-    get_query = f"SELECT link FROM links WHERE link = '{link}'"
-    cursor.execute(get_query)
-    link = cursor.fetchone()
-    return link
-
-
-def check_title_in_db(title_article: str, cursor) -> str:
-    """
-    Check exist title in database.
-    param title_article: title which must check in database,
-    :return: if title in database - True, if not - None.
-    """
-    get_query = f"SELECT title_article FROM links WHERE title_article = '{title_article}'"
-    cursor.execute(get_query)
-    title = cursor.fetchone()
-    return title
 
 
 def insert_data_in_table_link_to_link(id_links: list[tuple] | tuple):
