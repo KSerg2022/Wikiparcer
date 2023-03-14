@@ -1,6 +1,7 @@
 """"""
 import psycopg2
 from psycopg2 import Error
+from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
 from db.data import tables
 from settings import database_name as db_name
@@ -10,6 +11,7 @@ class DBConnection:
     """"""
     def __init__(self):
         """"""
+        CreateDB()
         self.conn = psycopg2.connect(host='127.0.0.1',
                                      user='postgres',
                                      database=f'{db_name}',
@@ -171,6 +173,51 @@ class DBConnection:
                 pass
 
         return title_article
+
+    def __del__(self):
+        """"""
+        self.conn.close()
+
+
+class CreateDB:
+    """"""
+    def __init__(self):
+        self.conn = psycopg2.connect(host='127.0.0.1',
+                                     user='postgres',
+                                     password='1qa2ws3ed',
+                                     port='5432')
+        self.conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+        self.cursor = self.conn.cursor()
+        self.create_db()
+
+    def create_db(self) -> bool:
+        """
+        Create database with given name.
+         :return: if database was created - True, if not - False.
+        """
+        if not self.check_db_exist():
+            try:
+                self.cursor.execute(f"CREATE DATABASE {db_name}")
+
+            except (Exception, Error) as error:
+                print(f'PostgresSQL: {error}')
+                self.conn.rollback()
+
+            return True
+        return False
+
+    def check_db_exist(self) -> bool:
+        """
+        Check if is there database with given name.
+        :return: if database with given name exist - True, if not - False.
+        """
+        self.cursor.execute(f"SELECT datname FROM pg_database;")
+        db_names = self.cursor.fetchall()
+
+        db_names = [list(dbname)[0] for dbname in db_names]
+        if db_name in db_names:
+            return True
+        return False
 
     def __del__(self):
         """"""
