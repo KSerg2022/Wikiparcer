@@ -2,13 +2,18 @@
 from settings import (tasks,
                       requests_per_minute,
                       links_per_page)
-from main.main import main as start
+from main.pathfinder import PathFinder
+from utils.calc_time import calc_time
 
 
-def main(start_article, finish_article,  requests_per_minute=None, links_per_page=None):
+@calc_time
+def main(start_article, finish_article, requests_per_minute, links_per_page):
     """Main controller"""
-    total_result = start(start_article, finish_article, requests_per_minute, links_per_page)
-    return total_result
+    path = PathFinder(start_article, finish_article, requests_per_minute, links_per_page)
+    path_from_to = path.main()
+    if not path_from_to:
+        print('Can not find result.', path_from_to)
+    print(path_from_to)
 
 
 if __name__ == '__main__':
