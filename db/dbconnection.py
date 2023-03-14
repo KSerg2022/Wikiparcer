@@ -36,8 +36,7 @@ class DBConnection:
                 insert_query = f"INSERT INTO links(link, title_article) VALUES {link};"
                 self.cursor.execute(insert_query)
                 self.conn.commit()
-            except (Exception, Error) as error:
-                # print(f'When adding data {link} in PostgresSQ {error}')
+            except Error:
                 self.conn.rollback()
                 update_query = f"UPDATE links SET link = '{list(link)[0]}' WHERE title_article = '{list(link)[1]}'" \
                                f"AND NOT EXISTS (SELECT link FROM links WHERE link = '{list(link)[0]}')"
@@ -53,8 +52,7 @@ class DBConnection:
                 insert_query = f'INSERT INTO link_to_link(link_left, link_right) VALUES {link}'
                 self.cursor.execute(insert_query)
                 self.conn.commit()
-            except (Exception, Error) as error:
-                # print(f'When adding data {link} in PostgresSQL {error}')
+            except Error:
                 self.conn.rollback()
 
     def delete_db(self):
@@ -78,7 +76,7 @@ class DBConnection:
             try:
                 query = f"SELECT id FROM links WHERE link = '{link}'"
                 self.cursor.execute(query)
-            except (Exception, Error) as error:
+            except Error as error:
                 print(f'When searching for data {link} in PostgresSQ {error}')
                 self.conn.rollback()
             else:
@@ -99,14 +97,13 @@ class DBConnection:
         try:
             query = f"SELECT id FROM links WHERE title_article = '{title}'"
             self.cursor.execute(query)
-        except (Exception, Error) as error:
-            print(f'When searching for data {title} in PostgresSQ {error}')
+        except Error:
             self.conn.rollback()
         else:
             id_result = self.cursor.fetchone()
             try:
                 id_article.append(id_result[0])
-            except:
+            except TypeError:
                 return []
         return id_article
 
@@ -138,8 +135,7 @@ class DBConnection:
 
         try:
             self.cursor.execute(query)
-        except (Exception, Error) as error:
-            print(f'When searching for data in  PostgresSQ {error}')
+        except Error:
             self.conn.rollback()
         else:
             # for url in self.cursor.fetchall():
@@ -168,14 +164,13 @@ class DBConnection:
 
         try:
             self.cursor.execute(query)
-        except (Exception, Error) as error:
-            print(f'When searching for data in PostgresSQ {error}')
+        except Error:
             self.conn.rollback()
         else:
             title = self.cursor.fetchone()
             try:
                 title_article.append(title[0])
-            except Exception:
+            except TypeError:
                 return False
 
         return title_article
@@ -194,15 +189,14 @@ class DBConnection:
                     f"WHERE title_article = '{title}') " \
                     f"AND id = link_left"
             self.cursor.execute(query)
-        except (Exception, Error) as error:
-            print(f'When searching for data in PostgresSQ {error}')
+        except Error:
             self.conn.rollback()
         else:
             title = self.cursor.fetchall()
             try:
                 for value in title:
                     title_article.append(value[0])
-            except Exception:
+            except Error:
                 pass
 
         return title_article
