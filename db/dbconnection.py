@@ -8,7 +8,6 @@ from settings import database_name as db_name
 
 class DBConnection:
     """"""
-
     def __init__(self):
         """"""
         self.conn = psycopg2.connect(host='127.0.0.1',
@@ -20,18 +19,11 @@ class DBConnection:
         self.cursor.execute(tables[0])
         self.cursor.execute(tables[1])
 
-    # def __del__(self):
-    #     """"""
-    #     self.conn.close()
-
     def add_links_to_db(self, links: list[tuple] | tuple):
         """"""
         if not isinstance(links, list):
             links = [links]
         for link in links:
-
-            # print(link)
-
             try:
                 insert_query = f"INSERT INTO links(link, title_article) VALUES {link};"
                 self.cursor.execute(insert_query)
@@ -40,8 +32,6 @@ class DBConnection:
                 self.conn.rollback()
                 update_query = f"UPDATE links SET link = '{list(link)[0]}' WHERE title_article = '{list(link)[1]}'" \
                                f"AND NOT EXISTS (SELECT link FROM links WHERE link = '{list(link)[0]}')"
-
-                # print(update_query)
                 self.cursor.execute(update_query)
                 self.conn.commit()
 
@@ -54,12 +44,6 @@ class DBConnection:
                 self.conn.commit()
             except Error:
                 self.conn.rollback()
-
-    def delete_db(self):
-        """"""
-        self.cursor.execute('Delete from link_to_link')
-        self.cursor.execute('Delete from links')
-        self.conn.commit()
 
     def get_id_for_link(self, links: list[tuple] | tuple | str) -> list:
         """
@@ -128,21 +112,12 @@ class DBConnection:
         query = f"SELECT link, title_article FROM links " \
                 f"WHERE links.id IN (SELECT link_right FROM link_to_link" \
                 f" WHERE link_left = {id_for_start_url})"
-        # if article:
-        #     query = f"SELECT link, title_article FROM links " \
-        #             f"WHERE links.id IN (SELECT link_right FROM link_to_link" \
-        #             f" WHERE link_left = {id_for_start_url})"
-
         try:
             self.cursor.execute(query)
         except Error:
             self.conn.rollback()
         else:
-            # for url in self.cursor.fetchall():
-            #     urls.append(list(url)[0])
             urls = self.cursor.fetchall()
-
-        # print(f'urls - {len(urls), urls[:3]}')
 
         return urls
 
@@ -154,11 +129,7 @@ class DBConnection:
         :return: title for the article in database according url.
         """
         title_article = []
-
-        # print(f'title - {title}, url - {url}')
-
-        if title:
-            query = f"SELECT title_article FROM links WHERE title_article = '{title}'"
+        query = f"SELECT title_article FROM links WHERE title_article = '{title}'"
         if url:
             query = f"SELECT title_article FROM links WHERE link = '{url}'"
 
@@ -200,3 +171,7 @@ class DBConnection:
                 pass
 
         return title_article
+
+    def __del__(self):
+        """"""
+        self.conn.close()
