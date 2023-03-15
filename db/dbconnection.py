@@ -8,7 +8,6 @@ from settings import database_name as db_name
 
 
 class DBConnection:
-    """"""
     def __init__(self):
         """"""
         CreateDB()
@@ -21,57 +20,57 @@ class DBConnection:
         self.cursor.execute(tables[0])
         self.cursor.execute(tables[1])
 
-    def add_links_to_db(self, links: list[tuple] | tuple):
+    def add_urls_to_db(self, urls: list[tuple] | tuple):
         """"""
-        if not isinstance(links, list):
-            links = [links]
-        for link in links:
+        if not isinstance(urls, list):
+            urls = [urls]
+        for url in urls:
             try:
-                insert_query = f"INSERT INTO links(link, title_article) VALUES {link};"
+                insert_query = f"INSERT INTO links(link, title_article) VALUES {url};"
                 self.cursor.execute(insert_query)
                 self.conn.commit()
             except Error:
                 self.conn.rollback()
-                update_query = f"UPDATE links SET link = '{list(link)[0]}' WHERE title_article = '{list(link)[1]}'" \
-                               f"AND NOT EXISTS (SELECT link FROM links WHERE link = '{list(link)[0]}')"
+                update_query = f"UPDATE links SET link = '{list(url)[0]}' WHERE title_article = '{list(url)[1]}'" \
+                               f"AND NOT EXISTS (SELECT link FROM links WHERE link = '{list(url)[0]}')"
                 self.cursor.execute(update_query)
                 self.conn.commit()
 
-    def add_link_to_link(self, id_links: list[tuple] | tuple):
+    def add_url_to_url(self, id_urls: list[tuple] | tuple):
         """"""
-        for link in id_links:
+        for url in id_urls:
             try:
-                insert_query = f'INSERT INTO link_to_link(link_left, link_right) VALUES {link}'
+                insert_query = f'INSERT INTO link_to_link(link_left, link_right) VALUES {url}'
                 self.cursor.execute(insert_query)
                 self.conn.commit()
             except Error:
                 self.conn.rollback()
 
-    def get_id_for_link(self, links: list[tuple] | tuple | str) -> list:
+    def get_id_for_url(self, urls: list[tuple] | tuple | str) -> list:
         """
         Searching id in database for link or links from list.
-        :param links: list of links or a link to search for their id in the database,
+        :param urls: list of links or a link to search for their id in the database,
         :return: list of id for link or links from list.
         """
-        id_for_link = []
-        if not isinstance(links, list):
-            links = [links]
-        for link in links:
-            if isinstance(link, tuple):
-                link = link[0]
+        id_for_url = []
+        if not isinstance(urls, list):
+            urls = [urls]
+        for url in urls:
+            if isinstance(url, tuple):
+                url = url[0]
             try:
-                query = f"SELECT id FROM links WHERE link = '{link}'"
+                query = f"SELECT id FROM links WHERE link = '{url}'"
                 self.cursor.execute(query)
             except Error as error:
-                print(f'When searching for data {link} in PostgresSQ {error}')
+                print(f'When searching for data {url} in PostgresSQ {error}')
                 self.conn.rollback()
             else:
-                id_link = self.cursor.fetchone()
-                if not id_link:
+                id_url = self.cursor.fetchone()
+                if not id_url:
                     continue
                 else:
-                    id_for_link.append(id_link[0])
-        return id_for_link
+                    id_for_url.append(id_url[0])
+        return id_for_url
 
     def get_id_for_title_article(self, title: str) -> list[str]:
         """
@@ -93,34 +92,33 @@ class DBConnection:
                 return []
         return id_article
 
-    def get_urls_from_start_url(self, start_url: list[str] | str = None, article: str = None) -> list[str]:
+    def get_urls_from_start_url(self, from_url: list[str] | str = None, article: str = None) -> list[str]:
         """
         Get a list of link's id, first-level descendants.
-        :param start_url: initial link,
+        :param from_url: initial link,
         :param article: If True - function return list of articles? if False - list of links,
         :return: list of ids for links, which are first-level descendants.
         """
-        id_for_start_url = 0
+        id_for_from_url = 0
         try:
-            id_for_start_url = self.get_id_for_link(start_url)[0]
+            id_for_from_url = self.get_id_for_url(from_url)[0]
         except IndexError:
             pass
         try:
-            id_for_start_url = self.get_id_for_title_article(article)[0]
+            id_for_from_url = self.get_id_for_title_article(article)[0]
         except IndexError:
             pass
-        urls = []
 
+        urls = []
         query = f"SELECT link, title_article FROM links " \
                 f"WHERE links.id IN (SELECT link_right FROM link_to_link" \
-                f" WHERE link_left = {id_for_start_url})"
+                f" WHERE link_left = {id_for_from_url})"
         try:
             self.cursor.execute(query)
         except Error:
             self.conn.rollback()
         else:
             urls = self.cursor.fetchall()
-
         return urls
 
     def get_title_article(self, title: str = None, url: str = None) -> list[str] | bool:
@@ -155,7 +153,6 @@ class DBConnection:
         :return:  if is - title for the article in database according url, if not is - False.
         """
         title_article = []
-
         try:
             query = f"SELECT title_article FROM link_to_link, links " \
                     f"WHERE link_right = (SELECT id link FROM links " \
