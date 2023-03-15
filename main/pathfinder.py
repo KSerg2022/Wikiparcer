@@ -144,6 +144,8 @@ class PathFinder:
             else:
                 for article in parent_title_articles:
                     if article in path_from_to or article in self.time_data_1:
+                        if article in path_from_to and len(parent_title_articles) == 1:
+                            return False
                         continue
 
                     self.time_data_1.add(article)
@@ -166,8 +168,8 @@ class PathFinder:
                     path_from_to_article = self.get_path_from_start_to_finish_article(path_from_to)
                     if path_from_to_article:
                         return path_from_to
-                    else:
-                        path_from_to.pop(0)
+                    path_from_to.pop(0)
+                return False
 
     def find_path_to_finish_article(self, from_article, to_article):
         """
