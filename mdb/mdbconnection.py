@@ -84,14 +84,9 @@ class MDBConnection:
 
     def get_urls_to_article(self, title: str) -> list[str] | None:
         """"""
-        urls_to_article = []
-        id_articles = self.col.find_one({"title": title}, {"to_article": 1})
-
         try:
-            id_articles = id_articles['to_article']
+            id_articles = self.col.find_one({"title": title}, {"to_article": 1})['to_article']
         except (TypeError, KeyError):
-            return None
-
-        for id_article in id_articles:
-            urls_to_article.append(self.col.find_one({"_id": id_article}, {"_id": 0, "title": 1})["title"])
+            return []
+        urls_to_article = [url_to_article['title'] for url_to_article in self.col.find({"_id": {"$in": id_articles}})]
         return urls_to_article
