@@ -195,6 +195,7 @@ class PathFinder:
     def main(self):
         """Main controller."""
         if path_from_to := self.get_result_from_db(self.start_article, self.finish_article):
+        # if path_from_to := False:
             return path_from_to
 
         else:
