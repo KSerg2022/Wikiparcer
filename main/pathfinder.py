@@ -5,7 +5,7 @@ from time import sleep, time
 from settings import wiki_url
 from utils.calc_time import calc_delay
 from main.parser import WikiParser
-from db.dbconnection import DBConnection
+from mdb.mdbconnection import MDBConnection
 
 
 class PathFinder:
@@ -13,7 +13,7 @@ class PathFinder:
     time_data_2 = set()
 
     def __init__(self, start_article, finish_article, requests_per_minute, urls_per_page):
-        self.db = DBConnection()
+        self.db = MDBConnection()
         self.parser = WikiParser()
         self.start_article = start_article
         self.finish_article = finish_article
@@ -83,7 +83,8 @@ class PathFinder:
         if url:
             return url
         else:
-            urls = self.db.get_urls_from_start_url(from_url)
+            urls = self.db.get_urls_from_article(title=from_article)
+
             url = self.get_page_by_link(urls, to_article=to_article)
             if url:
                 return url
@@ -96,17 +97,12 @@ class PathFinder:
         :param from_url: link to article from which are start find,
         :param urls: list of urls.
          """
-        self.db.add_urls_to_db((from_url, from_article))
-        self.db.add_urls_to_db(urls)
+        self.db.add_article_to_db((from_url, from_article))
+        self.db.add_article_to_db(urls)
 
-        try:
-            id_start_link = self.db.get_id_for_title_article(from_article)
-        except TypeError:
-            id_start_link = self.db.get_id_for_url(from_url)
-
-        id_links = self.db.get_id_for_url(urls)
-        data_for_table_link_to_link = list(zip(id_start_link * len(id_links), id_links))
-        self.db.add_url_to_url(data_for_table_link_to_link)
+        id_urls = self.db.get_ids(urls)
+        self.db.add_from_article(from_article, id_urls)
+        self.db.add_to_article(from_article, id_urls)
 
     def get_result_from_db(self, from_article: str, to_article: str) -> bool | list[str]:
         """
@@ -116,8 +112,8 @@ class PathFinder:
         :return: List title articles through which can get from start_article to finish_article, if not found - False.
         """
         path_from_to = []
-        from_title_article = self.db.get_title_article(from_article)
-        to_title_article = self.db.get_title_article(to_article)
+        from_title_article = self.db.get_title(from_article)
+        to_title_article = self.db.get_title(to_article)
         if not from_title_article or not to_title_article:
             return False
 
@@ -134,7 +130,7 @@ class PathFinder:
         :return: List title articles through which can get from start_article to finish_article, if not found - False.
         """
         while True:
-            parent_title_articles = self.db.get_check_parent_title_article(path_from_to[-len(path_from_to)])
+            parent_title_articles = self.db.get_urls_to_article(title=path_from_to[-len(path_from_to)])
             if not parent_title_articles:
                 return False
 
@@ -151,7 +147,7 @@ class PathFinder:
                     self.time_data_1.add(article)
                     path_from_to.insert(0, article)
 
-                    parent_articles = self.db.get_check_parent_title_article(path_from_to[-len(path_from_to)])
+                    parent_articles = self.db.get_urls_to_article(title=path_from_to[-len(path_from_to)])
                     if not parent_articles:
                         continue
                     if self.start_article in parent_articles:
@@ -179,7 +175,7 @@ class PathFinder:
         :return: ! add comment.
         """
         title_articles = [(f'{wiki_url}{from_article}', from_article)]
-        title_articles.extend(self.db.get_urls_from_start_url(article=from_article))
+        title_articles.extend(self.db.get_urls_from_article(title=from_article))
         for title_article in title_articles[:self.urls_per_page]:
             if title_article in self.time_data_2:
                 continue
