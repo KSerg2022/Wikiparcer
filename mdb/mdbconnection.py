@@ -74,17 +74,12 @@ class MDBConnection:
 
     def get_urls_from_article(self, title: str) -> list[tuple]:
         """"""
-        urls_from_article = []
-        id_articles = self.col.find_one({"title": title}, {"from_article": 1})
         try:
-            id_articles = id_articles['from_article']
+            id_articles = self.col.find_one({"title": title}, {"_id": 0, "from_article": 1})['from_article']
         except (TypeError, KeyError):
             return []
-
-        for id_article in id_articles:
-            url = self.col.find_one({"_id": id_article}, {"_id": 0, "url": 1})["url"]
-            title = self.col.find_one({"_id": id_article}, {"_id": 0, "title": 1})["title"]
-            urls_from_article.append((url, title))
+        urls_from_article = [(url_from_article['url'], url_from_article['title'])
+                             for url_from_article in self.col.find({"_id": {"$in": id_articles}})]
         return urls_from_article
 
     def get_urls_to_article(self, title: str) -> list[str] | None:
