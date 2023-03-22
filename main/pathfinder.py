@@ -11,6 +11,7 @@ from mdb.mdbconnection import MDBConnection
 class PathFinder:
     time_data_1 = set()
     time_data_2 = set()
+    time_data_3 = set()
 
     def __init__(self, start_article, finish_article, requests_per_minute, urls_per_page):
         self.db = MDBConnection()
@@ -62,7 +63,11 @@ class PathFinder:
         """
         if isinstance(from_url, tuple):
             from_url = list(from_url)[0]
+
+        if from_url in self.time_data_3:
+            return False, []
         urls = self.parser.get_urls(from_url)
+        self.time_data_3.add(from_url)
 
         url_to_article = self.find_finish_article(urls, to_article)
         if url_to_article:
