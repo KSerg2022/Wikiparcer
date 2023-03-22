@@ -1,20 +1,8 @@
 """"""
-from pprint import pprint
-
 import pymongo
-from bson.codec_options import CodecOptions
 
+from pymongo.errors import DuplicateKeyError, BulkWriteError
 from settings import database_name as db_name
-
-from mdb.data_for_testing import data, data_many
-
-
-# collaction = {
-#               'url': 'link',
-#               'title': 'title article',
-#               'url_to_article': (id),
-#               'url_from_article': (id)
-#               }
 
 
 class MDBConnection:
@@ -23,94 +11,92 @@ class MDBConnection:
         self.client = pymongo.MongoClient("mongodb://localhost:27017/")
         self.db = self.client[f'{db_name}']
         self.col = self.db.articles
-        # self.q = CodecOptions({
-        #                         '_id': {"$inc": {'score': 1}},
-        #                         'url': 'link',
-        #                         'title': 'title article',
-        #                         'url_to_article': (),
-        #                         'url_from_article': ()}
-        # )
-        # self.col = self.db.create_collection('articles', self.q)
+        self.col.create_index([('title', pymongo.ASCENDING)], unique=True)
 
-    def get_server_info(self):
-        return self.client.server_info()
-
-    def get_db_list(self):
-        return self.client.list_database_names()
-
-    def get_col_list(self):
-        return self.db.list_collection_names()
-
-    def get_db_stats(self):
-        return self.db.command("dbstats")
-
-    def get_col_stats(self):
-        return self.db.command("collstats", "articles")
-
-    def get_validate(self):
-        return self.db.command("validate", "articles")
-
-    def add_article_to_db(self,
-                          articles):  # {'url': 'link', 'title': 'title article', 'url_to_article': (),'url_from_article': ()}
+    def add_article_to_db(self, articles: tuple | list[tuple]):
+        """"""
         if not isinstance(articles, list):
             articles = [articles]
-        query = [{'url': article[0], 'title': article[1], 'url_to_article': [], 'url_from_article': []}
-                 for article in articles if not self.get_id(url=article[0])]
-
+        else:
+            articles = list(set(articles))
+        query = [{'url': article[0], 'title': article[1]}
+                 for article in articles]
         if query:
-            self.col.insert_many(query, ordered=False)
-    # def add_article_to_db(self, articles):  # {'url': 'link', 'title': 'title article', 'url_to_article': (),'url_from_article': ()}
-    #     if not isinstance(articles, list):
-    #         articles = [articles]
-    #     for article in articles:
-    #         print(article)
-    #         query = {'url': article[0], 'title': article[1], 'url_to_article': [], 'url_from_article': []}
-    #         print(query)
-    #         if not self.get_id(url=article[0]):
-    #             self.col.insert_one(query)
+            try:
+                self.col.insert_many(query, ordered=False)
+            except (TypeError, DuplicateKeyError, BulkWriteError):
+                pass
 
-    def add_urls_from_article(self, title_article, url_from_article):
+    def add_from_article(self, title_article: str, ids_from_article: list[int]):
+        """"""
         myquery = {"title": title_article}
-        new_values = {"$set": {"url_from_article": url_from_article}}
+        new_values = {"$addToSet": {"from_article": {"$each": ids_from_article}}}
         self.col.update_one(myquery, new_values)
-        pass
 
-    def add_urls_to_article(self, title_article, url_to_article):
-        myquery = {"title": title_article}
-        new_values = {"$set": {"url_from_article": url_to_article}}
-        self.col.update_one(myquery, new_values)
-        pass
+    def add_to_article(self, title_article: str, ids_to_article: list[int]):
+        """"""
+        id_title_article = self.get_id(title=title_article)
+        for id_to_article in ids_to_article:
+            myquery = {"_id": id_to_article}
+            new_values = {"$addToSet": {"to_article": id_title_article}}
+            self.col.update_one(myquery, new_values)
 
-    def get_id(self, url=None, title=None):
-        id_article = None
-        if url:
-            id_article = self.col.find_one({"url": url}, {"address": 0, "url_to_article": 0, "url_from_article": 0})
-        if title:
-            id_article = self.col.find_one({"title": title}, {"address": 0, "url_to_article": 0, "url_from_article": 0})
-        return id_article
+    def get_id(self, title: str) -> int:
+        """"""
+        id_article = self.col.find_one({"title": title}, {"_id": 1})
+        if not id_article:
+            return id_article
+        return id_article['_id']
 
-    def get_urls_from_article(self, url=None, title=None):
-        id_articles = None
-        if url:
-            id_articles = self.col.find({"url": url}, {"_id": 0, "address": 0, "url_to_article": 0})
-        if title:
-            id_articles = self.col.find({"title": title}, {"_id": 0, "address": 0, "url_to_article": 0})
+    def get_ids(self, urls: tuple | list[tuple]) -> list[int]:
+        """"""
+        id_articles = []
+        if not isinstance(urls, list):
+            urls = [urls]
+        for url in urls:
+            try:
+                id_article = self.col.find_one({"url": url[0]}, {"_id": 1})["_id"]
+            except TypeError:
+                try:
+                    id_article = self.col.find_one({"title": url[1]}, {"_id": 1})["_id"]
+                except TypeError:
+                    id_article = None
+
+            id_articles.append(id_article)
         return id_articles
 
-    def get_urls_to_article(self, url=None, title=None):
-        id_articles = None
-        if url:
-            id_articles = self.col.find({"url": url}, {"_id": 0, "address": 0, "url_from_article": 0})
-        if title:
-            id_articles = self.col.find({"title": title}, {"_id": 0, "address": 0, "url_from_article": 0})
-        return id_articles
+    def get_title(self, title_article: str) -> list[str] | None:
+        """"""
+        title = self.col.find_one({"title": title_article}, {"_id": 0, "title": 1})
+        if not title:
+            return None
+        return [title["title"]]
 
+    def get_urls_from_article(self, title: str) -> list[tuple]:
+        """"""
+        urls_from_article = []
+        id_articles = self.col.find_one({"title": title}, {"from_article": 1})
+        try:
+            id_articles = id_articles['from_article']
+        except (TypeError, KeyError):
+            return []
 
-mdb = MDBConnection()
-# print(mdb.get_db_stats())
-# pprint(mdb.get_db_stats())
-# print(mdb.get_col_stats())
+        for id_article in id_articles:
+            url = self.col.find_one({"_id": id_article}, {"_id": 0, "url": 1})["url"]
+            title = self.col.find_one({"_id": id_article}, {"_id": 0, "title": 1})["title"]
+            urls_from_article.append((url, title))
+        return urls_from_article
 
-mdb.add_article_to_db(data)
+    def get_urls_to_article(self, title: str) -> list[str] | None:
+        """"""
+        urls_to_article = []
+        id_articles = self.col.find_one({"title": title}, {"to_article": 1})
 
-mdb.add_article_to_db(data_many)
+        try:
+            id_articles = id_articles['to_article']
+        except (TypeError, KeyError):
+            return None
+
+        for id_article in id_articles:
+            urls_to_article.append(self.col.find_one({"_id": id_article}, {"_id": 0, "title": 1})["title"])
+        return urls_to_article
