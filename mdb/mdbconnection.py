@@ -17,8 +17,8 @@ class MDBConnection:
         """"""
         if not isinstance(articles, list):
             articles = [articles]
-        else:
-            articles = list(set(articles))
+        # else:
+        #     articles = list(set(articles))
         query = [{'url': article[0], 'title': article[1]}
                  for article in articles]
         if query:
