@@ -9,9 +9,6 @@ from mdb.mdbconnection import MDBConnection
 
 
 class PathFinder:
-    time_data_1 = set()
-    time_data_2 = set()
-    time_data_3 = set()
 
     def __init__(self, start_article, finish_article, requests_per_minute, urls_per_page):
         self.db = MDBConnection()
@@ -20,8 +17,11 @@ class PathFinder:
         self.finish_article = finish_article
         self.requests_per_minute = requests_per_minute
         self.urls_per_page = urls_per_page
+        self.time_data_1 = set()
+        self.time_data_2 = set()
+        self.time_data_3 = set()
 
-    def get_page_by_link(self, urls: list[str], to_article: str) -> tuple | bool:
+    def get_page_by_link(self, urls: list[tuple], to_article: str) -> tuple | bool:
         """
         Find link to article with title - in variable 'to_article'
         :param urls: list of links for queries,
@@ -200,7 +200,6 @@ class PathFinder:
     def main(self):
         """Main controller."""
         if path_from_to := self.get_result_from_db(self.start_article, self.finish_article):
-        # if path_from_to := False:
             return path_from_to
 
         else:
