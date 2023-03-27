@@ -1,33 +1,18 @@
-version: '3.1'
+version: '6.0'
 
 services:
-  postgres:
-    container_name: postgres
-    image: postgres:15.1
+  mongodb:
+    container_name: mongodb
+#    image: mongo
+    image: mongodb/mongodb-community-server
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=wiki
+      - MONGO_INITDB_ROOT_USERNAME=mongo
+      - MONGO_INITDB_ROOT_PASSWORD=mongo
     volumes:
-      - ./pg_data:/var/lib/postgresql/data
+      - ./mongo_data:/data/db
     ports:
-      - "5432:5432"
-    restart: always
-    networks:
-      - wiki_network
-
-  pgadmin:
-    image: dpage/pgadmin4
-    container_name: pgadmin4
-    ports:
-      - "3333:80"
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@gmail.com
-      PGADMIN_DEFAULT_PASSWORD: admin
-    links:
-      - postgres:postgres
-    depends_on:
-      - postgres
+      - "27017:27017"
+    restart: unless-stopped
     networks:
       - wiki_network
 
