@@ -7,8 +7,9 @@ from settings import database_name as db_name
 
 class MDBConnection:
     def __init__(self):
-        """"""
-        self.client = pymongo.MongoClient("mongodb://localhost:27017/")
+        # """"""
+        self.client = pymongo.MongoClient("mongodb://mongo:mongo@localhost:27017")
+        # self.client = pymongo.MongoClient("mongodb://localhost:27017")
         self.db = self.client[f'{db_name}']
         self.col = self.db.articles
         self.col.create_index([('title', pymongo.ASCENDING)], unique=True)
@@ -17,8 +18,6 @@ class MDBConnection:
         """"""
         if not isinstance(articles, list):
             articles = [articles]
-        # else:
-        #     articles = list(set(articles))
         query = [{'url': article[0], 'title': article[1]}
                  for article in articles]
         if query:
