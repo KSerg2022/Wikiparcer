@@ -8,16 +8,29 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=wiki
-#      POSTGRES_USER: postgres
-#      POSTGRES_PASSWORD: postgres
-#      POSTGRES_DB: wiki
     volumes:
       - ./pg_data:/var/lib/postgresql/data
-      - ./db.init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
-      - "5430:5430"
+      - "5432:5432"
     restart: always
+    networks:
+      - wiki_network
 
-volumes:
-  db:
-    driver: local
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin4
+    ports:
+      - "3333:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@gmail.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    links:
+      - postgres:postgres
+    depends_on:
+      - postgres
+    networks:
+      - wiki_network
+
+networks:
+  wiki_network:
+    driver: bridge
