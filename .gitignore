@@ -131,3 +131,4 @@ dmypy.json
 # my aadings
 .idea
 pg_data
+mongo_data
