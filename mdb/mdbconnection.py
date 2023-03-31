@@ -7,7 +7,7 @@ from settings import database_name as db_name
 
 class MDBConnection:
     def __init__(self):
-        # """"""
+        """"""
         self.client = pymongo.MongoClient("mongodb://mongo:mongo@localhost:27017")
         # self.client = pymongo.MongoClient("mongodb://localhost:27017")
         self.db = self.client[f'{db_name}']
